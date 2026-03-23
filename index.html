@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tool Box</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+    <script defer src="./app.js"></script>
+  </head>
+  <body data-theme="aurora">
+    <div class="page-glow page-glow-left"></div>
+    <div class="page-glow page-glow-right"></div>
+
+    <div class="app-shell">
+      <header class="hero glass-card">
+        <div>
+          <p class="eyebrow" data-i18n="hero_eyebrow">Local npm toolbox</p>
+          <h1 data-i18n="hero_title">실무형 유틸리티를 세련된 탭 UI로 묶은 Tool Box</h1>
+          <p class="hero-copy" data-i18n="hero_copy">
+            QR 생성/스캔/카메라 확인, 텍스트 분석, JSON pretty viewer, SmartThings TV 추출 도구까지 한 화면에서 빠르게 실행할 수 있습니다.
+          </p>
+        </div>
+        <div class="hero-side">
+          <div class="hero-badges">
+            <span>QR Studio</span>
+            <span>Text Intelligence</span>
+            <span>JSON Inspector</span>
+            <span>SmartThings TV</span>
+          </div>
+          <div class="settings-card">
+            <div class="settings-heading">
+              <p class="section-kicker" data-i18n="settings_kicker">Settings</p>
+              <h2 data-i18n="settings_title">환경 설정</h2>
+            </div>
+            <div class="settings-grid">
+              <label class="field">
+                <span data-i18n="language_label">언어</span>
+                <select id="language-select">
+                  <option value="ko" selected>한국어</option>
+                  <option value="en">English</option>
+                </select>
+              </label>
+              <label class="field">
+                <span data-i18n="theme_label">테마</span>
+                <select id="theme-select">
+                  <option value="aurora" selected>Aurora</option>
+                  <option value="midnight">Midnight</option>
+                  <option value="light">Light</option>
+                </select>
+              </label>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <nav class="tab-bar glass-card" aria-label="Main tool tabs">
+        <button class="tab active" data-tab-target="qr" data-i18n="tab_qr">QR 도구</button>
+        <button class="tab" data-tab-target="text" data-i18n="tab_text">텍스트 카운터</button>
+        <button class="tab" data-tab-target="json" data-i18n="tab_json">JSON Pretty Viewer</button>
+        <button class="tab" data-tab-target="smartthings">SmartThings TV</button>
+      </nav>
+
+      <main class="panel-stack">
+        <section class="panel active" data-tab-panel="qr">
+          <div class="grid-two top-align">
+            <div class="glass-card card stack-gap">
+              <div class="section-heading">
+                <div>
+                  <p class="section-kicker">QR Studio</p>
+                  <h2 data-i18n="qr_title">QR Maker & Reader</h2>
+                </div>
+                <span class="status-pill">Live Preview</span>
+              </div>
+
+              <label class="field">
+                <span data-i18n="qr_payload">QR 내용</span>
+                <textarea id="qr-input" rows="5">https://example.com/tool-box</textarea>
+              </label>
+
+              <div class="grid-two compact-grid">
+                <label class="field">
+                  <span id="qr-size-label">사이즈: 256px</span>
+                  <input id="qr-size" type="range" min="128" max="768" step="16" value="256" />
+                </label>
+                <label class="field">
+                  <span id="qr-margin-label">여백: 2</span>
+                  <input id="qr-margin" type="range" min="0" max="8" step="1" value="2" />
+                </label>
+              </div>
+
+              <div class="grid-three compact-grid">
+                <label class="field">
+                  <span data-i18n="qr_error_level">에러 보정</span>
+                  <select id="qr-error-level">
+                    <option value="L">L (Low)</option>
+                    <option value="M" selected>M (Medium)</option>
+                    <option value="Q">Q (Quartile)</option>
+                    <option value="H">H (High)</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Foreground</span>
+                  <input id="qr-dark-color" type="color" value="#111827" />
+                </label>
+                <label class="field">
+                  <span>Background</span>
+                  <input id="qr-light-color" type="color" value="#ffffff" />
+                </label>
+              </div>
+
+              <div class="grid-three compact-grid">
+                <label class="field">
+                  <span data-i18n="qr_output_format">출력 포맷</span>
+                  <select id="qr-format">
+                    <option value="image/png" selected>PNG</option>
+                    <option value="image/jpeg">JPEG</option>
+                    <option value="image/webp">WEBP</option>
+                  </select>
+                </label>
+                <label class="field checkbox-field">
+                  <span data-i18n="qr_options">옵션</span>
+                  <label class="checkbox-inline"><input id="qr-show-bg" type="checkbox" checked /> <span data-i18n="qr_include_bg">배경색 포함</span></label>
+                </label>
+                <label class="field">
+                  <span data-i18n="benchmark_iterations">반복 횟수</span>
+                  <input id="benchmark-count" type="number" min="1" max="1000" step="1" value="100" />
+                </label>
+              </div>
+
+              <div class="button-row">
+                <button id="benchmark-button" type="button" data-i18n="run_benchmark">벤치마킹 실행</button>
+                <button id="real-benchmark-button" type="button" class="ghost-button" data-i18n="run_real_benchmark">리얼 벤치마킹 실행</button>
+                <a id="download-link" class="secondary-button" href="#" download="tool-box-qr.png" data-i18n="download_qr">QR 다운로드</a>
+              </div>
+
+              <div class="grid-two compact-grid">
+                <label class="field upload-field">
+                  <span data-i18n="upload_qr_image">이미지로 QR 읽기</span>
+                  <input id="qr-upload" type="file" accept="image/*" />
+                </label>
+                <div class="field">
+                  <span data-i18n="camera_scan">카메라 스캔</span>
+                  <div class="button-row">
+                    <button id="camera-start" type="button" data-i18n="open_camera">카메라 열기</button>
+                    <button id="camera-stop" type="button" class="ghost-button" data-i18n="close_camera">카메라 닫기</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="result-box">
+                <strong data-i18n="reader_result">리더 결과</strong>
+                <p id="qr-read-result">이미지 업로드 또는 카메라 스캔 결과가 여기에 표시됩니다.</p>
+              </div>
+            </div>
+
+            <div class="stack-gap">
+              <div class="glass-card card stack-gap">
+                <div class="section-heading">
+                  <div>
+                    <p class="section-kicker">Output</p>
+                    <h2 data-i18n="preview_title">Preview</h2>
+                  </div>
+                  <span class="status-pill subtle">Adjustable</span>
+                </div>
+                <div class="qr-preview">
+                  <img id="qr-image" alt="Generated QR code preview" />
+                </div>
+                <div class="meta-grid">
+                  <div class="mini-stat"><span data-i18n="char_count_label">문자 수</span><strong id="qr-char-count">0</strong></div>
+                  <div class="mini-stat"><span data-i18n="current_format">현재 포맷</span><strong id="qr-format-label">PNG</strong></div>
+                  <div class="mini-stat"><span data-i18n="correction_level">보정 수준</span><strong id="qr-level-label">M</strong></div>
+                </div>
+              </div>
+
+              <div class="glass-card card stack-gap">
+                <div class="section-heading">
+                  <div>
+                    <p class="section-kicker">Scanner</p>
+                    <h2 data-i18n="camera_preview">Camera Preview</h2>
+                  </div>
+                </div>
+                <div class="camera-stage">
+                  <video id="qr-video" autoplay playsinline muted></video>
+                  <div class="camera-overlay"></div>
+                </div>
+                <p id="camera-status" class="helper-text">카메라를 열면 실시간으로 QR을 스캔합니다.</p>
+              </div>
+
+              <div class="glass-card card stack-gap">
+                <div class="section-heading">
+                  <div>
+                    <p class="section-kicker">Performance</p>
+                    <h2 data-i18n="benchmark_title">Benchmark</h2>
+                  </div>
+                </div>
+                <ul id="benchmark-list" class="benchmark-list empty-state">
+                  <li>버튼을 누르면 서로 다른 payload 기준 QR 생성 시간을 측정합니다.</li>
+                </ul>
+              </div>
+
+              <div class="glass-card card stack-gap">
+                <div class="section-heading">
+                  <div>
+                    <p class="section-kicker">Real Scan</p>
+                    <h2 data-i18n="real_benchmark_title">Real Camera Benchmark</h2>
+                  </div>
+                </div>
+                <div class="meta-grid">
+                  <div class="mini-stat"><span data-i18n="attempts">시도 횟수</span><strong id="real-attempts">0</strong></div>
+                  <div class="mini-stat"><span data-i18n="successes">성공 수</span><strong id="real-successes">0</strong></div>
+                  <div class="mini-stat"><span data-i18n="avg_time">평균 시간</span><strong id="real-average">0 ms</strong></div>
+                </div>
+                <div id="real-benchmark-log" class="status-stream">카메라를 연 뒤 리얼 벤치마킹을 실행하면 프레임 단위 반복 측정을 수행합니다.</div>
+              </div>
+            </div>
+          </div>
+          <canvas id="qr-canvas" class="hidden-canvas"></canvas>
+        </section>
+
+        <section class="panel" data-tab-panel="text">
+          <div class="grid-two top-align">
+            <div class="glass-card card stack-gap">
+              <div class="section-heading">
+                <div>
+                  <p class="section-kicker">Text Intelligence</p>
+                  <h2 data-i18n="text_counter_title">텍스트 카운터</h2>
+                </div>
+                <span class="status-pill">Enhanced</span>
+              </div>
+              <label class="field">
+                <span data-i18n="text_input">텍스트 입력</span>
+                <textarea id="text-input" rows="15">여기에 텍스트를 입력해 보세요.</textarea>
+              </label>
+              <div class="button-row">
+                <button id="normalize-spacing" type="button" data-i18n="normalize_space">공백 정리</button>
+                <button id="copy-text" type="button" class="ghost-button" data-i18n="copy">복사</button>
+                <button id="clear-text" type="button" class="ghost-button" data-i18n="clear">비우기</button>
+              </div>
+            </div>
+
+            <div class="stack-gap">
+              <div class="glass-card card">
+                <div class="stats-grid stats-grid-rich">
+                  <div class="stat-card accent"><span data-i18n="char_count_label">글자수</span><strong id="char-count">0</strong></div>
+                  <div class="stat-card"><span data-i18n="byte_count_label">바이트수 (UTF-8)</span><strong id="byte-count">0</strong></div>
+                  <div class="stat-card"><span data-i18n="line_count_label">줄 수</span><strong id="line-count">0</strong></div>
+                  <div class="stat-card"><span data-i18n="trimmed_count_label">공백 제외</span><strong id="trimmed-count">0</strong></div>
+                  <div class="stat-card"><span data-i18n="word_count_label">단어 수</span><strong id="word-count">0</strong></div>
+                  <div class="stat-card"><span data-i18n="paragraph_count_label">문단 수</span><strong id="paragraph-count">0</strong></div>
+                  <div class="stat-card"><span data-i18n="reading_time_label">읽기 시간</span><strong id="reading-time">0초</strong></div>
+                  <div class="stat-card"><span data-i18n="copy_status_label">최근 복사 상태</span><strong id="copy-status">대기</strong></div>
+                </div>
+              </div>
+
+              <div class="glass-card card stack-gap">
+                <div class="section-heading">
+                  <div>
+                    <p class="section-kicker">Suggestions</p>
+                    <h2 data-i18n="text_suggestion_title">추가 기능 제안도 반영</h2>
+                  </div>
+                </div>
+                <ul class="feature-list">
+                  <li data-i18n="text_feature_1">단어 수, 문단 수, 읽기 시간 계산</li>
+                  <li data-i18n="text_feature_2">공백 정리 버튼으로 붙여넣은 텍스트 정돈</li>
+                  <li data-i18n="text_feature_3">원문 복사 버튼으로 메신저/문서 전달 전 체크</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-tab-panel="json">
+          <div class="grid-two top-align">
+            <div class="glass-card card stack-gap">
+              <div class="section-heading">
+                <div>
+                  <p class="section-kicker">JSON Inspector</p>
+                  <h2 data-i18n="json_title">입력 JSON / 문자열 처리</h2>
+                </div>
+                <span class="status-pill subtle">Primitive Safe</span>
+              </div>
+              <label class="field">
+                <span data-i18n="json_raw_input">원본 입력</span>
+                <textarea id="json-input" rows="16" spellcheck="false">{
+  "name": "tool-box",
+  "features": ["qr", "text", "json", "smartthings"],
+  "enabled": true
+}</textarea>
+              </label>
+              <p class="helper-text" data-i18n="json_helper">객체/배열뿐 아니라 "hello", 123, true, 일반 텍스트도 보기 좋게 변환합니다.</p>
+            </div>
+
+            <div class="stack-gap">
+              <div class="glass-card card stack-gap">
+                <div class="meta-grid">
+                  <div class="mini-stat"><span data-i18n="json_type">해석 타입</span><strong id="json-type">object</strong></div>
+                  <div class="mini-stat"><span data-i18n="json_length">입력 길이</span><strong id="json-length">0</strong></div>
+                  <div class="mini-stat"><span data-i18n="json_status">상태</span><strong id="json-status">정상</strong></div>
+                </div>
+                <div id="json-error" class="result-box error-box hidden">
+                  <strong data-i18n="parse_error">파싱 오류</strong>
+                  <p></p>
+                </div>
+                <pre id="json-output" class="json-output"></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-tab-panel="smartthings">
+          <div class="glass-card card stack-gap">
+            <div class="section-heading">
+              <div>
+                <p class="section-kicker">SmartThings TV</p>
+                <h2 data-i18n="smartthings_title">아티팩트 기반 TPK 추출</h2>
+              </div>
+              <span class="status-pill">Server Assisted</span>
+            </div>
+
+            <nav class="subtab-bar" aria-label="SmartThings subtabs">
+              <button class="subtab active" data-subtab-target="extract-tpk">Extract tpk file from Cosmos URL</button>
+            </nav>
+
+            <section class="subpanel active" data-subtab-panel="extract-tpk">
+              <div class="grid-two top-align">
+                <div class="stack-gap">
+                  <label class="field">
+                    <span>Cosmos artifact URL</span>
+                    <textarea id="cosmos-url" rows="6">http://repos.vd.sec.samsung.net/priv/168.219.245.191:81/PRV/builds/b981/17413981/artifacts/tizen_20260322.17413981/</textarea>
+                  </label>
+                  <div class="button-row">
+                    <button id="extract-tpk-button" type="button" data-i18n="extract_tpk">TPK 추출 시작</button>
+                  </div>
+                  <div class="result-box info-box">
+                    <strong data-i18n="how_it_works">동작 방식</strong>
+                    <p data-i18n="smartthings_helper">
+                      입력 URL에서 repos/product/armv7l/packages/armv7l/ 경로를 구성하고, rpm 목록을 확인한 뒤 SmartThings TPK를 포함한 rpm을 내려받아 내부 payload에서 usr/apps/.preload-rw-tpk 경로의 tpk를 추출합니다.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="stack-gap">
+                  <div class="glass-card soft-card stack-gap">
+                    <h3 data-i18n="extract_log">추출 로그</h3>
+                    <div id="smartthings-status" class="status-stream">대기 중</div>
+                  </div>
+                  <div class="glass-card soft-card stack-gap">
+                    <h3 data-i18n="notes">주의 사항</h3>
+                    <ul class="feature-list compact-list">
+                      <li data-i18n="smartthings_note_1">대상 서버 접근 권한이 없으면 403 등의 오류가 표시될 수 있습니다.</li>
+                      <li data-i18n="smartthings_note_2">rpm 포맷은 xz/gzip payload를 지원하도록 구현했습니다.</li>
+                      <li data-i18n="smartthings_note_3">발견한 첫 번째 SmartThings TPK를 자동 다운로드합니다.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
