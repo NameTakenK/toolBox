@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tool Box</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <p class="eyebrow">Local npm toolbox</p>
+        <h1>여러 기능을 상단 탭으로 실행하는 Tool Box</h1>
+        <p class="hero-copy">
+          QR maker & reader + benchmarking, 텍스트 글자/바이트 카운터, JSON pretty viewer를 하나의 로컬 페이지로 구성했습니다.
+        </p>
+      </header>
+
+      <nav class="tab-bar" aria-label="Tool tabs">
+        <button class="tab active" data-tab-target="qr">QR 도구</button>
+        <button class="tab" data-tab-target="text">텍스트 카운터</button>
+        <button class="tab" data-tab-target="json">JSON Pretty Viewer</button>
+      </nav>
+
+      <main>
+        <section class="panel active" data-tab-panel="qr">
+          <div class="grid-two">
+            <div class="card stack-gap">
+              <h2>QR Maker & Reader</h2>
+              <label class="field">
+                <span>QR 내용</span>
+                <textarea id="qr-input" rows="5">https://example.com/tool-box</textarea>
+              </label>
+              <label class="field">
+                <span id="qr-size-label">사이즈: 240px</span>
+                <input id="qr-size" type="range" min="128" max="512" step="16" value="240" />
+              </label>
+              <div class="button-row">
+                <button id="benchmark-button" type="button">벤치마킹 실행</button>
+                <a id="download-link" class="secondary-button" href="#" download="tool-box-qr.png">PNG 다운로드</a>
+              </div>
+              <label class="field upload-field">
+                <span>QR 이미지 업로드</span>
+                <input id="qr-upload" type="file" accept="image/*" />
+              </label>
+              <div class="result-box">
+                <strong>리더 결과</strong>
+                <p id="qr-read-result">업로드한 이미지의 QR을 읽으면 결과가 여기에 표시됩니다.</p>
+              </div>
+            </div>
+
+            <div class="card stack-gap">
+              <h2>Preview & Benchmark</h2>
+              <div class="qr-preview">
+                <img id="qr-image" alt="Generated QR code preview" />
+              </div>
+              <div class="result-box">
+                <strong>벤치마킹 결과</strong>
+                <ul id="benchmark-list" class="benchmark-list empty-state">
+                  <li>버튼을 누르면 서로 다른 payload 기준 QR 생성 시간을 측정합니다.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <canvas id="qr-canvas" class="hidden-canvas"></canvas>
+        </section>
+
+        <section class="panel" data-tab-panel="text">
+          <div class="card stack-gap">
+            <h2>글자수 / 바이트수 확인</h2>
+            <label class="field">
+              <span>텍스트 입력</span>
+              <textarea id="text-input" rows="12">여기에 텍스트를 입력해 보세요.</textarea>
+            </label>
+            <div class="stats-grid">
+              <div class="stat-card"><span>글자수</span><strong id="char-count">0</strong></div>
+              <div class="stat-card"><span>바이트수 (UTF-8)</span><strong id="byte-count">0</strong></div>
+              <div class="stat-card"><span>줄 수</span><strong id="line-count">0</strong></div>
+              <div class="stat-card"><span>공백 제외</span><strong id="trimmed-count">0</strong></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-tab-panel="json">
+          <div class="grid-two">
+            <div class="card stack-gap">
+              <h2>JSON 입력</h2>
+              <label class="field">
+                <span>원본 JSON</span>
+                <textarea id="json-input" rows="16" spellcheck="false">{
+  "name": "tool-box",
+  "features": ["qr", "text", "json"],
+  "enabled": true
+}</textarea>
+              </label>
+            </div>
+            <div class="card stack-gap">
+              <h2>Pretty Viewer</h2>
+              <div id="json-error" class="result-box error-box hidden">
+                <strong>파싱 오류</strong>
+                <p></p>
+              </div>
+              <pre id="json-output" class="json-output"></pre>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
