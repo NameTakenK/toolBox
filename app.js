@@ -18,6 +18,7 @@ const translations = {
     realBenchmarkNeedCamera: '리얼 벤치마킹을 실행하려면 카메라를 먼저 열어 주세요.', realBenchmarkRunning: '리얼 벤치마킹 실행 중', realBenchmarkSuccess: '성공', realBenchmarkFailure: '실패', realBenchmarkDetector: '디코더',
     avgLabel: '평균', totalLabel: '총합', charsUnit: 'chars', iterationUnit: '회', benchmarkDone: '생성 벤치마킹 완료',
     smartExtractTab: 'Extract tpk file from Cosmos URL', smartExtractTitle: 'Extract tpk file from Cosmos URL', smartCosmosLabel: 'Cosmos URL', smartExtractButton: '추출 시작', smartDownloadButton: 'TPK 다운로드', smartStatusTitle: '진행 상태',
+    smartStatusPreparing: '준비 중...', smartStatusExtracting: '추출 중...', smartStatusDone: '완료', smartStatusError: '오류',
   },
   en: {
     heroTitle: 'Tool Box with polished utilities', heroCopy: 'QR generation/reading/benchmarking, text analytics, flexible JSON viewer, and SmartThings TV utility.',
@@ -34,6 +35,7 @@ const translations = {
     realBenchmarkNeedCamera: 'Open camera before real benchmark.', realBenchmarkRunning: 'Running real benchmark', realBenchmarkSuccess: 'Success', realBenchmarkFailure: 'Failure', realBenchmarkDetector: 'Detector',
     avgLabel: 'Average', totalLabel: 'Total', charsUnit: 'chars', iterationUnit: 'runs', benchmarkDone: 'Generation benchmark complete',
     smartExtractTab: 'Extract tpk file from Cosmos URL', smartExtractTitle: 'Extract tpk file from Cosmos URL', smartCosmosLabel: 'Cosmos URL', smartExtractButton: 'Start extraction', smartDownloadButton: 'Download TPK', smartStatusTitle: 'Status',
+    smartStatusPreparing: 'Preparing...', smartStatusExtracting: 'Extracting...', smartStatusDone: 'Done', smartStatusError: 'Error',
   },
 };
 
@@ -185,9 +187,10 @@ function updateJsonViewer() {
 async function extractSmartThingsTpk() {
   const url = cosmosUrlInput.value.trim();
   if (!url) return;
-  setStatus(smartthingsStatus, 'Extracting...');
+  setStatus(smartthingsStatus, `${t('smartStatusPreparing')} ${url}`);
   downloadTpkLink.classList.add('hidden');
   try {
+    setStatus(smartthingsStatus, t('smartStatusExtracting'));
     const response = await fetch('/api/smartthings/extract-tpk', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cosmosUrl: url }),
     });
@@ -196,9 +199,9 @@ async function extractSmartThingsTpk() {
     downloadTpkLink.href = result.downloadPath;
     downloadTpkLink.download = result.fileName;
     downloadTpkLink.classList.remove('hidden');
-    setStatus(smartthingsStatus, `Done: ${result.fileName}`);
+    setStatus(smartthingsStatus, `${t('smartStatusDone')}: ${result.fileName}`);
   } catch (error) {
-    setStatus(smartthingsStatus, `Error: ${error.message}`);
+    setStatus(smartthingsStatus, `${t('smartStatusError')}: ${error.message}`);
   }
 }
 
