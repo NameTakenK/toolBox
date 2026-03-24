@@ -115,8 +115,14 @@ async function findAllFilesRecursive(dir, pattern, acc = []) {
 
 async function ensureExtractCommands() {
   const locator = process.platform === 'win32' ? 'where' : 'which';
-  await execFileAsync(locator, ['rpm2cpio']);
-  await execFileAsync(locator, ['cpio']);
+  try {
+    await execFileAsync(locator, ['rpm2cpio']);
+    await execFileAsync(locator, ['cpio']);
+  } catch {
+    const winHint = 'Windows에서는 기본 CMD/Powershell 환경에서 rpm2cpio/cpio를 바로 사용할 수 없습니다. WSL(Ubuntu) 또는 Linux/macOS 환경에서 실행해 주세요.';
+    const unixHint = 'rpm2cpio/cpio 명령을 먼저 설치해 주세요. Ubuntu/Debian: sudo apt-get install rpm2cpio cpio';
+    throw new Error(process.platform === 'win32' ? winHint : unixHint);
+  }
 }
 
 function pickLatestSmartThingsTpk(candidates) {
