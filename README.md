@@ -34,3 +34,13 @@ npm run dev
 - QR 라이브러리는 CDN을 사용합니다.
 - 카메라 기능과 리얼 벤치마킹은 브라우저 카메라 권한이 필요합니다.
 - SmartThings 추출 API는 서버 실행 환경에 `rpm2cpio`, `cpio` 명령이 설치되어 있어야 동작합니다.
+
+## SmartThings 추출 의존 명령어
+
+```bash
+# Ubuntu / Debian
+sudo apt-get install rpm2cpio cpio
+
+# Fedora / RHEL
+sudo dnf install rpm-build cpio
+```

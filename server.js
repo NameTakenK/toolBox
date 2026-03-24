@@ -70,11 +70,47 @@ async function findFileRecursive(dir, pattern) {
   return null;
 }
 
+async function findAllFilesRecursive(dir, pattern, acc = []) {
+  const entries = await fsp.readdir(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      await findAllFilesRecursive(fullPath, pattern, acc);
+    } else if (pattern.test(entry.name) || pattern.test(fullPath)) {
+      acc.push(fullPath);
+    }
+  }
+  return acc;
+}
+
+async function ensureExtractCommands() {
+  await execFileAsync('bash', ['-lc', 'command -v rpm2cpio >/dev/null && command -v cpio >/dev/null']);
+}
+
+function pickLatestSmartThingsTpk(candidates) {
+  const toVersion = (name) => {
+    const matched = name.match(/SmartThingsApp-(\d+(?:\.\d+)*)\.tpk/i);
+    if (!matched) return [];
+    return matched[1].split('.').map((n) => Number.parseInt(n, 10) || 0);
+  };
+  return [...candidates].sort((a, b) => {
+    const va = toVersion(path.basename(a));
+    const vb = toVersion(path.basename(b));
+    const len = Math.max(va.length, vb.length);
+    for (let i = 0; i < len; i += 1) {
+      const diff = (vb[i] || 0) - (va[i] || 0);
+      if (diff !== 0) return diff;
+    }
+    return path.basename(a).localeCompare(path.basename(b));
+  })[0];
+}
+
 async function handleExtractTpk(req, res) {
   try {
     const bodyRaw = await readBody(req);
     const { cosmosUrl } = JSON.parse(bodyRaw || '{}');
     if (!cosmosUrl) return sendJson(res, 400, { error: 'cosmosUrl is required' });
+    await ensureExtractCommands();
 
     const repoUrl = buildRepoUrl(cosmosUrl);
     const rpmUrl = await findRpmUrl(repoUrl);
@@ -91,7 +127,10 @@ async function handleExtractTpk(req, res) {
     await ensureDir(cpioDir);
     await runShellExtract(`cpio -idmv < "${cpioFile}"`, cpioDir);
 
-    const tpkFile = await findFileRecursive(cpioDir, /com\.samsung\.tv\.SmartThingsApp-.*\.tpk$/i);
+    const preloadDir = await findFileRecursive(cpioDir, /(?:^|[/\\])usr[/\\]apps[/\\]\.preload-rw-tpk$/i);
+    if (!preloadDir) throw new Error('usr/apps/.preload-rw-tpk directory was not found');
+    const tpkCandidates = await findAllFilesRecursive(preloadDir, /com\.samsung\.tv\.SmartThingsApp-.*\.tpk$/i);
+    const tpkFile = pickLatestSmartThingsTpk(tpkCandidates);
     if (!tpkFile) throw new Error('SmartThings TPK not found in extracted files');
 
     await ensureDir(downloadsDir);
