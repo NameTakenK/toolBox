@@ -1,10 +1,10 @@
 const translations = {
   ko: {
-    heroTitle: '세련된 유틸리티를 한 곳에 모은 Tool Box',
-    heroCopy: 'QR 생성/리더/벤치마킹, 텍스트 분석, 유연한 JSON Viewer, SmartThings TV 유틸리티까지 탭으로 제공합니다.',
+    heroTitle: '개발자를 위한 실전형 Tool Box',
+    heroCopy: 'QR, 텍스트, JSON, SmartThings 작업을 빠르게 처리할 수 있는 생산성 도구 모음입니다.',
     languageLabel: '언어', themeLabel: '테마', themeDark: '다크', themeLight: '라이트', themeSystem: '시스템',
     tabQr: 'QR 도구', tabText: '텍스트 카운터', tabJson: 'JSON Pretty Viewer', tabSmartthings: 'SmartThings TV',
-    qrToolTitle: 'QR Maker & Reader', qrContentLabel: 'QR 내용', iterationLabel: '반복 횟수', qrErrorLevel: '오류 보정', qrMargin: '여백', qrDarkColor: '전경색', qrLightColor: '배경색',
+    qrToolTitle: 'QR Maker & Reader', qrContentLabel: 'QR 내용', iterationLabel: '반복 횟수', qrErrorLevel: '오류 보정', qrMargin: '여백', qrVersion: '버전', qrDarkColor: '전경색', qrLightColor: '배경색',
     benchmarkButton: '벤치마킹 실행', realBenchmarkButton: '리얼 벤치마킹 실행', downloadButton: 'PNG 다운로드', uploadLabel: 'QR 이미지 업로드',
     cameraStartButton: '카메라 열기', cameraStopButton: '카메라 닫기', readerResultTitle: '리더 결과', cameraStatusTitle: '카메라 상태', previewBenchmarkTitle: 'Preview & Benchmark',
     benchmarkResultTitle: '벤치마킹 결과', realBenchmarkResultTitle: '리얼 벤치마킹 결과', benchmarkPlaceholder: '버튼을 누르면 QR 생성 반복 벤치마킹을 실행합니다.',
@@ -21,10 +21,10 @@ const translations = {
     smartReady: '준비됨', smartStatusPreparing: '준비 중...', smartStatusExtracting: '추출 중...', smartStatusDone: '완료', smartStatusError: '오류',
   },
   en: {
-    heroTitle: 'Tool Box with polished utilities', heroCopy: 'QR generation/reading/benchmarking, text analytics, flexible JSON viewer, and SmartThings TV utility.',
+    heroTitle: 'Practical Tool Box for Developers', heroCopy: 'A focused utility suite for QR, text, JSON, and SmartThings workflows.',
     languageLabel: 'Language', themeLabel: 'Theme', themeDark: 'Dark', themeLight: 'Light', themeSystem: 'System',
     tabQr: 'QR Tools', tabText: 'Text Counter', tabJson: 'JSON Pretty Viewer', tabSmartthings: 'SmartThings TV',
-    qrToolTitle: 'QR Maker & Reader', qrContentLabel: 'QR content', iterationLabel: 'Iterations', qrErrorLevel: 'Error correction', qrMargin: 'Margin', qrDarkColor: 'Foreground', qrLightColor: 'Background',
+    qrToolTitle: 'QR Maker & Reader', qrContentLabel: 'QR content', iterationLabel: 'Iterations', qrErrorLevel: 'Error correction', qrMargin: 'Margin', qrVersion: 'Version', qrDarkColor: 'Foreground', qrLightColor: 'Background',
     benchmarkButton: 'Run benchmark', realBenchmarkButton: 'Run real benchmark', downloadButton: 'Download PNG', uploadLabel: 'Upload QR image',
     cameraStartButton: 'Open camera', cameraStopButton: 'Close camera', readerResultTitle: 'Reader result', cameraStatusTitle: 'Camera status', previewBenchmarkTitle: 'Preview & Benchmark',
     benchmarkResultTitle: 'Benchmark results', realBenchmarkResultTitle: 'Real benchmark results', benchmarkPlaceholder: 'Run repeated QR generation benchmark.', realBenchmarkPlaceholder: 'Open camera and measure real frame decoding performance.',
@@ -46,14 +46,17 @@ const subTabButtons = document.querySelectorAll('[data-sub-tab-target]');
 const subTabPanels = document.querySelectorAll('[data-sub-tab-panel]');
 
 const qrInput = $('qr-input'); const qrSize = $('qr-size'); const qrSizeLabel = $('qr-size-label'); const qrImage = $('qr-image'); const downloadLink = $('download-link');
-const qrErrorLevel = $('qr-error-level'); const qrMargin = $('qr-margin'); const qrColorDark = $('qr-color-dark'); const qrColorLight = $('qr-color-light');
+const qrErrorLevel = $('qr-error-level'); const qrMargin = $('qr-margin'); const qrVersion = $('qr-version'); const qrColorDark = $('qr-color-dark'); const qrColorLight = $('qr-color-light');
 const benchmarkButton = $('benchmark-button'); const benchmarkList = $('benchmark-list'); const realBenchmarkButton = $('real-benchmark-button'); const realBenchmarkList = $('real-benchmark-list');
 const benchmarkIterationsInput = $('benchmark-iterations'); const uploadInput = $('qr-upload'); const qrReadResult = $('qr-read-result'); const qrCanvas = $('qr-canvas');
 const cameraPreview = $('camera-preview'); const cameraStartButton = $('camera-start-button'); const cameraStopButton = $('camera-stop-button'); const cameraStatus = $('camera-status');
 const languageSelect = $('language-select'); const themeSelect = $('theme-select');
 const textInput = $('text-input'); const charCount = $('char-count'); const byteCount = $('byte-count'); const lineCount = $('line-count'); const trimmedCount = $('trimmed-count');
 const wordCount = $('word-count'); const sentenceCount = $('sentence-count'); const paragraphCount = $('paragraph-count'); const readingTime = $('reading-time');
+const textTrimLinesButton = $('text-trim-lines-button'); const textRemoveEmptyButton = $('text-remove-empty-button'); const textDedupeLinesButton = $('text-dedupe-lines-button');
+const textSortLinesButton = $('text-sort-lines-button'); const textUpperButton = $('text-upper-button'); const textLowerButton = $('text-lower-button');
 const jsonInput = $('json-input'); const jsonOutput = $('json-output'); const jsonError = $('json-error'); const jsonErrorText = jsonError.querySelector('p');
+const jsonFormatButton = $('json-format-button'); const jsonMinifyButton = $('json-minify-button'); const jsonCopyButton = $('json-copy-button');
 const cosmosUrlInput = $('cosmos-url-input'); const extractTpkButton = $('extract-tpk-button'); const downloadTpkLink = $('download-tpk-link'); const smartthingsStatus = $('smartthings-status');
 
 const encoder = new TextEncoder(); const settingsStorageKey = 'tool-box-settings'; const systemThemeQuery = window.matchMedia('(prefers-color-scheme: light)');
@@ -79,7 +82,8 @@ const ensureReaderLibrary = () => typeof window.jsQR !== 'undefined';
 function getIterations() { const parsed = Number.parseInt(benchmarkIterationsInput.value, 10); const value = Number.isFinite(parsed) && parsed > 0 ? parsed : 100; benchmarkIterationsInput.value = String(value); return value; }
 
 function qrOptions(width = Number(qrSize.value)) {
-  return { width, margin: Number(qrMargin.value), errorCorrectionLevel: qrErrorLevel.value, color: { dark: qrColorDark.value, light: qrColorLight.value } };
+  const version = Number.parseInt(qrVersion.value, 10) || 0;
+  return { width, margin: Number(qrMargin.value), errorCorrectionLevel: qrErrorLevel.value, version: version || undefined, color: { dark: qrColorDark.value, light: qrColorLight.value } };
 }
 
 function renderQr() {
@@ -179,11 +183,42 @@ function updateJsonViewer() {
   try {
     const normalized = normalizeJsonInput(jsonInput.value);
     const formatted = JSON.stringify(JSON.parse(normalized), null, 2);
-    jsonOutput.textContent = formatted; jsonOutput.classList.remove('hidden'); jsonError.classList.add('hidden');
+    jsonOutput.innerHTML = toHighlightedJson(formatted); jsonOutput.classList.remove('hidden'); jsonError.classList.add('hidden');
   } catch (error) {
-    jsonOutput.textContent = ''; jsonOutput.classList.add('hidden'); jsonError.classList.remove('hidden'); jsonErrorText.textContent = error.message;
+    jsonOutput.innerHTML = ''; jsonOutput.classList.add('hidden'); jsonError.classList.remove('hidden'); jsonErrorText.textContent = error.message;
   }
 }
+
+function escapeHtml(value) {
+  return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+}
+function toHighlightedJson(formatted) {
+  return escapeHtml(formatted).replace(/("(?:\\.|[^"\\])*")(\s*:)?|(-?\d+(?:\.\d+)?)|\b(true|false|null)\b/g, (matched, quoted, keySuffix, number, keyword) => {
+    if (quoted && keySuffix) return `<span class="json-key">${quoted}</span>${keySuffix}`;
+    if (quoted) return `<span class="json-string">${quoted}</span>`;
+    if (number) return `<span class="json-number">${number}</span>`;
+    if (keyword) return `<span class="json-keyword">${keyword}</span>`;
+    return matched;
+  });
+}
+
+function editText(transformer) {
+  textInput.value = transformer(textInput.value);
+  updateTextStats();
+}
+function trimLines(value) { return value.split('\n').map((line) => line.trim()).join('\n'); }
+function removeEmptyLines(value) { return value.split('\n').filter((line) => line.trim()).join('\n'); }
+function dedupeLines(value) {
+  const seen = new Set();
+  return value.split('\n').filter((line) => {
+    if (seen.has(line)) return false;
+    seen.add(line);
+    return true;
+  }).join('\n');
+}
+function sortLines(value) { return value.split('\n').sort((a, b) => a.localeCompare(b)).join('\n'); }
+function parseJsonOrThrow() { return JSON.parse(normalizeJsonInput(jsonInput.value)); }
+function setJsonValue(value) { jsonInput.value = value; updateJsonViewer(); }
 
 async function extractSmartThingsTpk() {
   const url = cosmosUrlInput.value.trim();
@@ -219,8 +254,25 @@ subTabButtons.forEach((button) => button.addEventListener('click', () => {
 }));
 
 benchmarkButton.addEventListener('click', runGenerationBenchmark); realBenchmarkButton.addEventListener('click', runRealBenchmark); cameraStartButton.addEventListener('click', startCamera); cameraStopButton.addEventListener('click', stopCamera);
-qrInput.addEventListener('input', renderQr); qrSize.addEventListener('input', renderQr); qrErrorLevel.addEventListener('change', renderQr); qrMargin.addEventListener('input', renderQr); qrColorDark.addEventListener('input', renderQr); qrColorLight.addEventListener('input', renderQr);
+qrInput.addEventListener('input', renderQr); qrSize.addEventListener('input', renderQr); qrErrorLevel.addEventListener('change', renderQr); qrMargin.addEventListener('input', renderQr); qrVersion.addEventListener('change', renderQr); qrColorDark.addEventListener('input', renderQr); qrColorLight.addEventListener('input', renderQr);
 textInput.addEventListener('input', updateTextStats); jsonInput.addEventListener('input', updateJsonViewer); extractTpkButton.addEventListener('click', extractSmartThingsTpk);
+textTrimLinesButton.addEventListener('click', () => editText(trimLines));
+textRemoveEmptyButton.addEventListener('click', () => editText(removeEmptyLines));
+textDedupeLinesButton.addEventListener('click', () => editText(dedupeLines));
+textSortLinesButton.addEventListener('click', () => editText(sortLines));
+textUpperButton.addEventListener('click', () => editText((value) => value.toUpperCase()));
+textLowerButton.addEventListener('click', () => editText((value) => value.toLowerCase()));
+jsonFormatButton.addEventListener('click', () => {
+  try { setJsonValue(JSON.stringify(parseJsonOrThrow(), null, 2)); } catch (error) { jsonError.classList.remove('hidden'); jsonErrorText.textContent = error.message; }
+});
+jsonMinifyButton.addEventListener('click', () => {
+  try { setJsonValue(JSON.stringify(parseJsonOrThrow())); } catch (error) { jsonError.classList.remove('hidden'); jsonErrorText.textContent = error.message; }
+});
+jsonCopyButton.addEventListener('click', async () => {
+  const value = jsonOutput.textContent || '';
+  if (!value || !navigator.clipboard) return;
+  await navigator.clipboard.writeText(value);
+});
 languageSelect.addEventListener('change', () => { currentLanguage = languageSelect.value; persistSettings(); applyTranslations(); });
 themeSelect.addEventListener('change', () => { currentTheme = themeSelect.value; persistSettings(); applyTheme(); });
 systemThemeQuery.addEventListener('change', () => { if (currentTheme === 'system') applyTheme(); });

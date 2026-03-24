@@ -3,7 +3,7 @@ const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
 const os = require('os');
-const { execFile } = require('child_process');
+const { execFile, spawn } = require('child_process');
 const { promisify } = require('util');
 
 const execFileAsync = promisify(execFile);
@@ -56,8 +56,34 @@ async function downloadFile(url, targetPath) {
   await fsp.writeFile(targetPath, Buffer.from(arrayBuffer));
 }
 
-async function runShellExtract(cmd, cwd) {
-  await execFileAsync('bash', ['-lc', cmd], { cwd, maxBuffer: 1024 * 1024 * 40 });
+function runCommand(command, args, cwd) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { cwd });
+    let stderr = '';
+    child.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code === 0) return resolve();
+      reject(new Error(`${command} exited with code ${code}${stderr ? `: ${stderr.trim()}` : ''}`));
+    });
+  });
+}
+
+function extractRpmToDir(rpmPath, cwd) {
+  return new Promise((resolve, reject) => {
+    const rpm = spawn('rpm2cpio', [rpmPath], { cwd });
+    const cpio = spawn('cpio', ['-idmv'], { cwd });
+    let stderr = '';
+    rpm.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
+    cpio.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
+    rpm.stdout.pipe(cpio.stdin);
+    rpm.on('error', reject);
+    cpio.on('error', reject);
+    cpio.on('close', (code) => {
+      if (code === 0) return resolve();
+      reject(new Error(`cpio extraction failed (${code})${stderr ? `: ${stderr.trim()}` : ''}`));
+    });
+  });
 }
 
 async function findFileRecursive(dir, pattern) {
@@ -88,7 +114,9 @@ async function findAllFilesRecursive(dir, pattern, acc = []) {
 }
 
 async function ensureExtractCommands() {
-  await execFileAsync('bash', ['-lc', 'command -v rpm2cpio >/dev/null && command -v cpio >/dev/null']);
+  const locator = process.platform === 'win32' ? 'where' : 'which';
+  await execFileAsync(locator, ['rpm2cpio']);
+  await execFileAsync(locator, ['cpio']);
 }
 
 function pickLatestSmartThingsTpk(candidates) {
@@ -124,7 +152,7 @@ async function handleExtractTpk(req, res) {
     const rpmPath = path.join(workDir, path.basename(new URL(rpmUrl).pathname) || 'target.rpm');
     await downloadFile(rpmUrl, rpmPath);
 
-    await runShellExtract(`rpm2cpio "${rpmPath}" | cpio -idmv`, workDir);
+    await extractRpmToDir(rpmPath, workDir);
 
     const cpioCandidates = await findAllFilesRecursive(workDir, /\.cpio$/i);
     const cpioFile = cpioCandidates.sort((a, b) => {
@@ -136,7 +164,7 @@ async function handleExtractTpk(req, res) {
     if (!cpioFile) throw new Error('cpio file not found after rpm extraction');
     const cpioDir = path.join(workDir, 'cpio-expanded');
     await ensureDir(cpioDir);
-    await runShellExtract(`cpio -idmv < "${cpioFile}"`, cpioDir);
+    await runCommand('cpio', ['-idmv', '-F', cpioFile], cpioDir);
 
     const preloadDir = await findFileRecursive(cpioDir, /(?:^|[/\\])usr[/\\]apps[/\\]\.preload-rw-tpk$/i);
     if (!preloadDir) throw new Error('usr/apps/.preload-rw-tpk directory was not found');
