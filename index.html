@@ -13,11 +13,13 @@
     <div class="app-shell">
       <header class="hero card glass">
         <div>
-          <p class="eyebrow">Local npm toolbox</p>
-          <h1 data-i18n="heroTitle">세련된 유틸리티를 한 곳에 모은 Tool Box</h1>
-          <p class="hero-copy" data-i18n="heroCopy">QR 생성/리더/벤치마킹, 텍스트 분석, 유연한 JSON Viewer, SmartThings TV 유틸리티까지 탭으로 제공합니다.</p>
+          <p class="eyebrow">Developer Toolkit</p>
+          <h1 data-i18n="heroTitle">개발자를 위한 실전형 Tool Box</h1>
+          <p class="hero-copy" data-i18n="heroCopy">QR, 텍스트, JSON, SmartThings 작업을 빠르게 처리할 수 있는 생산성 도구 모음입니다.</p>
         </div>
-        <section class="settings-grid" aria-label="Settings">
+        <details class="settings-menu" open>
+          <summary>Settings Menu</summary>
+          <section class="settings-grid" aria-label="Settings">
           <label class="field">
             <span data-i18n="languageLabel">언어</span>
             <select id="language-select">
@@ -33,7 +35,8 @@
               <option value="system" data-i18n="themeSystem">시스템</option>
             </select>
           </label>
-        </section>
+          </section>
+        </details>
       </header>
 
       <nav class="tab-bar" aria-label="Tool tabs">
@@ -76,6 +79,20 @@
                 <label class="field">
                   <span data-i18n="qrMargin">여백</span>
                   <input id="qr-margin" type="number" min="0" max="12" step="1" value="2" />
+                </label>
+                <label class="field">
+                  <span data-i18n="qrVersion">버전</span>
+                  <select id="qr-version">
+                    <option value="0" selected>Auto</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                    <option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
+                    <option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    <option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option>
+                    <option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option>
+                    <option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option>
+                    <option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option>
+                    <option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option>
+                  </select>
                 </label>
                 <label class="field">
                   <span data-i18n="qrDarkColor">전경색</span>
@@ -138,6 +155,14 @@
               <span data-i18n="textInputLabel">텍스트 입력</span>
               <textarea id="text-input" rows="10">여기에 텍스트를 입력해 보세요.</textarea>
             </label>
+            <div class="button-row">
+              <button id="text-trim-lines-button" type="button">Trim lines</button>
+              <button id="text-remove-empty-button" type="button">Remove empty lines</button>
+              <button id="text-dedupe-lines-button" type="button">Deduplicate lines</button>
+              <button id="text-sort-lines-button" type="button">Sort lines</button>
+              <button id="text-upper-button" type="button">UPPER</button>
+              <button id="text-lower-button" type="button">lower</button>
+            </div>
             <div class="stats-grid">
               <div class="stat-card"><span data-i18n="charCount">글자수</span><strong id="char-count">0</strong></div>
               <div class="stat-card"><span data-i18n="byteCount">바이트수 (UTF-8)</span><strong id="byte-count">0</strong></div>
@@ -162,6 +187,11 @@
             </div>
             <div class="card stack-gap">
               <h2 data-i18n="jsonPrettyTitle">Pretty Viewer</h2>
+              <div class="button-row">
+                <button id="json-format-button" type="button">Format</button>
+                <button id="json-minify-button" type="button">Minify</button>
+                <button id="json-copy-button" type="button">Copy</button>
+              </div>
               <div id="json-error" class="result-box error-box hidden"><strong data-i18n="jsonErrorTitle">파싱 오류</strong><p></p></div>
               <pre id="json-output" class="json-output"></pre>
             </div>
