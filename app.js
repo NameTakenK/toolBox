@@ -162,9 +162,14 @@ function updateTextStats() {
 }
 
 function normalizeJsonInput(raw) {
-  const value = raw.trim(); if (!value) return '';
-  if (/^[{\["\d\-]|^(true|false|null)$/i.test(value)) return value;
-  if (/^"[^"\\]*(?:\\.[^"\\]*)*"\s*:/.test(value) || /^[A-Za-z_$][\w$]*\s*:/.test(value)) return `{${value}}`;
+  const value = raw.trim();
+  if (!value) return '';
+
+  const isJsonFragment = /^"[^"\\]*(?:\\.[^"\\]*)*"\s*:/.test(value) || /^[A-Za-z_$][\w$]*\s*:/.test(value);
+  if (isJsonFragment) return `{${value}}`;
+
+  if (/^[{\[]/.test(value) || /^-?\d/.test(value) || /^"(?:[^"\\]|\\.)*"$/.test(value) || /^(true|false|null)$/i.test(value)) return value;
+
   return JSON.stringify(value);
 }
 function updateJsonViewer() {
