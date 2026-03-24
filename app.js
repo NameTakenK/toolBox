@@ -18,7 +18,7 @@ const translations = {
     realBenchmarkNeedCamera: '리얼 벤치마킹을 실행하려면 카메라를 먼저 열어 주세요.', realBenchmarkRunning: '리얼 벤치마킹 실행 중', realBenchmarkSuccess: '성공', realBenchmarkFailure: '실패', realBenchmarkDetector: '디코더',
     avgLabel: '평균', totalLabel: '총합', charsUnit: 'chars', iterationUnit: '회', benchmarkDone: '생성 벤치마킹 완료',
     smartExtractTab: 'Extract tpk file from Cosmos URL', smartExtractTitle: 'Extract tpk file from Cosmos URL', smartCosmosLabel: 'Cosmos URL', smartExtractButton: '추출 시작', smartDownloadButton: 'TPK 다운로드', smartStatusTitle: '진행 상태',
-    smartStatusPreparing: '준비 중...', smartStatusExtracting: '추출 중...', smartStatusDone: '완료', smartStatusError: '오류',
+    smartReady: '준비됨', smartStatusPreparing: '준비 중...', smartStatusExtracting: '추출 중...', smartStatusDone: '완료', smartStatusError: '오류',
   },
   en: {
     heroTitle: 'Tool Box with polished utilities', heroCopy: 'QR generation/reading/benchmarking, text analytics, flexible JSON viewer, and SmartThings TV utility.',
@@ -35,7 +35,7 @@ const translations = {
     realBenchmarkNeedCamera: 'Open camera before real benchmark.', realBenchmarkRunning: 'Running real benchmark', realBenchmarkSuccess: 'Success', realBenchmarkFailure: 'Failure', realBenchmarkDetector: 'Detector',
     avgLabel: 'Average', totalLabel: 'Total', charsUnit: 'chars', iterationUnit: 'runs', benchmarkDone: 'Generation benchmark complete',
     smartExtractTab: 'Extract tpk file from Cosmos URL', smartExtractTitle: 'Extract tpk file from Cosmos URL', smartCosmosLabel: 'Cosmos URL', smartExtractButton: 'Start extraction', smartDownloadButton: 'Download TPK', smartStatusTitle: 'Status',
-    smartStatusPreparing: 'Preparing...', smartStatusExtracting: 'Extracting...', smartStatusDone: 'Done', smartStatusError: 'Error',
+    smartReady: 'Ready', smartStatusPreparing: 'Preparing...', smartStatusExtracting: 'Extracting...', smartStatusDone: 'Done', smartStatusError: 'Error',
   },
 };
 
@@ -65,6 +65,7 @@ function applyTranslations() {
   document.documentElement.lang = currentLanguage;
   document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
   qrSizeLabel.textContent = `${t('sizeLabel')}: ${qrSize.value}px`;
+  if (!smartthingsStatus.dataset.busy) setStatus(smartthingsStatus, t('smartReady'));
 }
 function loadSettings() {
   try { const saved = JSON.parse(localStorage.getItem(settingsStorageKey) || '{}'); currentLanguage = saved.language || 'ko'; currentTheme = saved.theme || 'dark'; } catch {}
@@ -187,6 +188,8 @@ function updateJsonViewer() {
 async function extractSmartThingsTpk() {
   const url = cosmosUrlInput.value.trim();
   if (!url) return;
+  smartthingsStatus.dataset.busy = 'true';
+  extractTpkButton.disabled = true;
   setStatus(smartthingsStatus, `${t('smartStatusPreparing')} ${url}`);
   downloadTpkLink.classList.add('hidden');
   try {
@@ -202,6 +205,9 @@ async function extractSmartThingsTpk() {
     setStatus(smartthingsStatus, `${t('smartStatusDone')}: ${result.fileName}`);
   } catch (error) {
     setStatus(smartthingsStatus, `${t('smartStatusError')}: ${error.message}`);
+  } finally {
+    extractTpkButton.disabled = false;
+    delete smartthingsStatus.dataset.busy;
   }
 }
 

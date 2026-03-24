@@ -31,8 +31,12 @@ async function readBody(req) {
 }
 
 function buildRepoUrl(cosmosUrl) {
-  const trimmed = cosmosUrl.trim().replace(/\/+$/, '');
-  return `${trimmed}/repos/product/armv7l/packages/armv7l/`;
+  const trimmed = cosmosUrl.trim();
+  const parsed = new URL(trimmed);
+  if (!/^https?:$/.test(parsed.protocol)) throw new Error('Only http/https URLs are supported');
+  const normalized = trimmed.replace(/\/+$/, '');
+  if (/\/repos\/product\/armv7l\/packages\/armv7l$/i.test(normalized)) return `${normalized}/`;
+  return `${normalized}/repos/product/armv7l/packages/armv7l/`;
 }
 
 async function findRpmUrl(repoUrl) {
@@ -106,6 +110,7 @@ function pickLatestSmartThingsTpk(candidates) {
 }
 
 async function handleExtractTpk(req, res) {
+  let workDir;
   try {
     const bodyRaw = await readBody(req);
     const { cosmosUrl } = JSON.parse(bodyRaw || '{}');
@@ -115,13 +120,19 @@ async function handleExtractTpk(req, res) {
     const repoUrl = buildRepoUrl(cosmosUrl);
     const rpmUrl = await findRpmUrl(repoUrl);
 
-    const workDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'toolbox-smartthings-'));
+    workDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'toolbox-smartthings-'));
     const rpmPath = path.join(workDir, path.basename(new URL(rpmUrl).pathname) || 'target.rpm');
     await downloadFile(rpmUrl, rpmPath);
 
     await runShellExtract(`rpm2cpio "${rpmPath}" | cpio -idmv`, workDir);
 
-    const cpioFile = await findFileRecursive(workDir, /\.cpio$/i);
+    const cpioCandidates = await findAllFilesRecursive(workDir, /\.cpio$/i);
+    const cpioFile = cpioCandidates.sort((a, b) => {
+      const aPriority = /(?:payload|rootfs|image)\.cpio$/i.test(a) ? 1 : 0;
+      const bPriority = /(?:payload|rootfs|image)\.cpio$/i.test(b) ? 1 : 0;
+      if (aPriority !== bPriority) return bPriority - aPriority;
+      return b.localeCompare(a);
+    })[0];
     if (!cpioFile) throw new Error('cpio file not found after rpm extraction');
     const cpioDir = path.join(workDir, 'cpio-expanded');
     await ensureDir(cpioDir);
@@ -146,6 +157,8 @@ async function handleExtractTpk(req, res) {
     });
   } catch (error) {
     sendJson(res, 500, { error: error.message });
+  } finally {
+    if (workDir) await fsp.rm(workDir, { recursive: true, force: true }).catch(() => {});
   }
 }
 
