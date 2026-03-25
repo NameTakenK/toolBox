@@ -33,8 +33,8 @@ npm run dev
 
 - QR 라이브러리는 CDN을 사용합니다.
 - 카메라 기능과 리얼 벤치마킹은 브라우저 카메라 권한이 필요합니다.
-- SmartThings 추출 API는 서버 실행 환경에 압축 해제 도구가 필요합니다(`rpm2cpio`/`cpio` 또는 Windows의 `7z`).
-- Windows에서는 `C:\Program Files\7-Zip\7z.exe`(또는 PATH의 `7z`)를 우선 사용해 `.rpm`/payload를 추출합니다. 7-Zip이 없으면 WSL(Ubuntu)의 `rpm2cpio`, `cpio`를 사용합니다.
+- SmartThings 추출 API는 서버 실행 환경에 `rpm2cpio`, `cpio` 명령이 설치되어 있어야 동작합니다.
+- Windows에서 서버를 CMD/PowerShell로 실행해도, WSL(Ubuntu)에 `rpm2cpio`, `cpio`가 설치되어 있으면 자동으로 WSL 명령을 사용해 추출을 진행합니다.
 
 ## SmartThings 추출 의존 명령어
 
@@ -45,18 +45,3 @@ sudo apt-get install rpm2cpio cpio
 # Fedora / RHEL
 sudo dnf install rpm-build cpio
 ```
-
-
-## Windows에서 7-Zip으로 rpm/cpio 수동 해제
-
-`rpm2cpio`, `cpio`가 없을 때는 `C:\Program Files\7-Zip\7z.exe`로 2단계로 풀 수 있습니다.
-
-```powershell
-# 1) rpm -> cpio (또는 payload) 추출
-& "C:\Program Files\7-Zip\7z.exe" x .\package.rpm -o.\rpm_out -y
-
-# 2) rpm_out 안의 cpio 파일 추출
-& "C:\Program Files\7-Zip\7z.exe" x .\rpm_out\*.cpio -o.\cpio_out -y
-```
-
-> 참고: rpm 내부 payload 파일명이 `.cpio`가 아닐 수 있으니, `rpm_out` 디렉터리에서 실제 파일명을 확인한 뒤 2단계 입력 파일을 맞춰주세요.

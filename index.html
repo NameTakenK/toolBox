@@ -1,138 +1,256 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LumenFlow — Premium Productivity</title>
+    <title>Tool Box</title>
     <link rel="stylesheet" href="./styles.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
     <script defer src="./app.js"></script>
   </head>
   <body>
-    <div class="ambient ambient-a"></div>
-    <div class="ambient ambient-b"></div>
-
-    <header class="topbar glass">
-      <div>
-        <p class="eyebrow">LumenFlow</p>
-        <h1>Design your best day</h1>
-      </div>
-      <div class="top-actions">
-        <label class="search-wrap" for="global-search">
-          <span>⌕</span>
-          <input id="global-search" type="search" placeholder="Search tasks, tags, notes..." />
-        </label>
-        <button id="toggle-focus-mode" class="ghost">Focus Mode</button>
-      </div>
-    </header>
-
-    <main class="layout">
-      <section class="hero glass card">
-        <div>
-          <p class="eyebrow">Today · Thursday</p>
-          <h2>Good morning, Alex. You’re on track.</h2>
-          <p class="muted">You have 3 high-impact priorities today and 82% completion this week.</p>
+    <div class="dashboard-shell">
+      <button id="menu-toggle" class="menu-toggle" type="button" aria-controls="side-rail" aria-expanded="false">☰ Menu</button>
+      <div id="menu-backdrop" class="menu-backdrop" hidden></div>
+      <aside id="side-rail" class="side-rail card" aria-label="도구 메뉴">
+        <div class="brand-block">
+          <p class="eyebrow">AATROX STYLE</p>
+          <strong>Tool Box</strong>
+          <small>Minimal Admin UI</small>
         </div>
-        <div class="hero-kpis">
-          <article>
-            <span>Deep work</span>
-            <strong id="kpi-focus">2h 20m</strong>
-          </article>
-          <article>
-            <span>Tasks done</span>
-            <strong id="kpi-done">0/0</strong>
-          </article>
-          <article>
-            <span>Habit streak</span>
-            <strong id="kpi-streak">14 days</strong>
-          </article>
+        <nav class="rail-nav" aria-label="Sections">
+          <button class="tab active" data-tab-target="qr" data-i18n="tabQr">QR 도구</button>
+          <button class="tab" data-tab-target="text" data-i18n="tabText">텍스트 카운터</button>
+          <button class="tab" data-tab-target="json" data-i18n="tabJson">JSON Pretty Viewer</button>
+          <button class="tab" data-tab-target="smartthings" data-i18n="tabSmartthings">SmartThings TV</button>
+        </nav>
+        <div class="rail-summary">
+          <div class="summary-card">
+            <span data-i18n="quickSection">Quick</span>
+            <button id="quick-qr-button" class="quick-link" type="button" data-i18n="quickQr">QR 생성기</button>
+            <button id="quick-text-button" class="quick-link" type="button" data-i18n="quickText">텍스트 카운터</button>
+            <button id="quick-json-button" class="quick-link" type="button" data-i18n="quickJson">JSON 포맷터</button>
+            <button id="quick-smartthings-button" class="quick-link" type="button" data-i18n="quickSmart">TPK 추출기</button>
+          </div>
+
+          <div class="summary-card">
+            <span>Theme</span>
+            <strong>Neo Dark</strong>
+          </div>
+          <div class="summary-card">
+            <span>Status</span>
+            <strong>Online</strong>
+          </div>
         </div>
-      </section>
+      </aside>
 
-      <section class="stats-grid">
-        <article class="card glass metric"><span>Productivity Score</span><strong id="score-value">0</strong><small>Based on completion + focus cadence</small></article>
-        <article class="card glass metric"><span>Overdue</span><strong id="overdue-count">0</strong><small>Need immediate attention</small></article>
-        <article class="card glass metric"><span>In Progress</span><strong id="in-progress-count">0</strong><small>Actively moving forward</small></article>
-        <article class="card glass metric"><span>Notes Captured</span><strong id="notes-count">0</strong><small>Quick ideas captured today</small></article>
-      </section>
+      <div class="app-shell">
+        <header class="hero card glass">
+          <div>
+            <p class="eyebrow">Developer Toolkit</p>
+            <h1 data-i18n="heroTitle">개발자를 위한 실전형 Tool Box</h1>
+            <p class="hero-copy" data-i18n="heroCopy">QR, 텍스트, JSON, SmartThings 작업을 빠르게 처리할 수 있는 생산성 도구 모음입니다.</p>
+          </div>
+          <details class="settings-menu" open>
+            <summary>Settings Menu</summary>
+            <section class="settings-grid" aria-label="Settings">
+              <label class="field">
+                <span data-i18n="languageLabel">언어</span>
+                <select id="language-select">
+                  <option value="ko">한국어</option>
+                  <option value="en">English</option>
+                </select>
+              </label>
+              <label class="field">
+                <span data-i18n="themeLabel">테마</span>
+                <select id="theme-select">
+                  <option value="dark" data-i18n="themeDark">다크</option>
+                  <option value="light" data-i18n="themeLight">라이트</option>
+                  <option value="system" data-i18n="themeSystem">시스템</option>
+                </select>
+              </label>
+            </section>
+          </details>
+        </header>
 
-      <section class="main-grid">
-        <article class="card glass tasks">
-          <div class="section-head">
-            <h3>Task Board</h3>
-            <div class="filters">
-              <select id="priority-filter">
-                <option value="all">All priorities</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
-              <select id="status-filter">
-                <option value="all">All status</option>
-                <option value="overdue">Overdue</option>
-                <option value="in-progress">In progress</option>
-                <option value="completed">Completed</option>
-              </select>
+        <main>
+          <section class="panel active" data-tab-panel="qr">
+            <div class="grid-two qr-layout">
+              <div class="card stack-gap">
+                <h2 data-i18n="qrToolTitle">QR Maker & Reader</h2>
+                <label class="field">
+                  <span data-i18n="qrContentLabel">QR 내용</span>
+                  <textarea id="qr-input" rows="4">https://example.com/tool-box</textarea>
+                </label>
+                <div class="grid-two compact-grid">
+                  <label class="field">
+                    <span id="qr-size-label">사이즈: 240px</span>
+                    <input id="qr-size" type="range" min="128" max="512" step="16" value="240" />
+                  </label>
+                  <label class="field inline-field">
+                    <span data-i18n="iterationLabel">반복 횟수</span>
+                    <input id="benchmark-iterations" type="number" min="1" max="3000" step="1" value="100" />
+                  </label>
+                </div>
+
+                <div class="grid-two compact-grid">
+                  <label class="field">
+                    <span data-i18n="qrErrorLevel">오류 보정</span>
+                    <select id="qr-error-level">
+                      <option value="L">L (7%)</option>
+                      <option value="M" selected>M (15%)</option>
+                      <option value="Q">Q (25%)</option>
+                      <option value="H">H (30%)</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span data-i18n="qrMargin">여백</span>
+                    <input id="qr-margin" type="number" min="0" max="12" step="1" value="2" />
+                  </label>
+                  <label class="field">
+                    <span data-i18n="qrVersion">버전</span>
+                    <select id="qr-version">
+                      <option value="0" selected>Auto</option>
+                      <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                      <option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
+                      <option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                      <option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option>
+                      <option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option>
+                      <option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option>
+                      <option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option>
+                      <option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span data-i18n="qrDarkColor">전경색</span>
+                    <input id="qr-color-dark" type="color" value="#111827" />
+                  </label>
+                  <label class="field">
+                    <span data-i18n="qrLightColor">배경색</span>
+                    <input id="qr-color-light" type="color" value="#ffffff" />
+                  </label>
+                </div>
+
+                <div class="button-row">
+                  <button id="benchmark-button" type="button" data-i18n="benchmarkButton">벤치마킹 실행</button>
+                  <button id="real-benchmark-button" type="button" data-i18n="realBenchmarkButton">리얼 벤치마킹 실행</button>
+                  <a id="download-link" class="secondary-button" href="#" download="tool-box-qr.png" data-i18n="downloadButton">PNG 다운로드</a>
+                </div>
+
+                <label class="field upload-field">
+                  <span data-i18n="uploadLabel">QR 이미지 업로드</span>
+                  <input id="qr-upload" type="file" accept="image/*" />
+                </label>
+                <div class="button-row">
+                  <button id="camera-start-button" type="button" data-i18n="cameraStartButton">카메라 열기</button>
+                  <button id="camera-stop-button" type="button" class="tab" data-i18n="cameraStopButton">카메라 닫기</button>
+                </div>
+                <div class="result-box">
+                  <strong data-i18n="readerResultTitle">리더 결과</strong>
+                  <p id="qr-read-result">업로드한 이미지의 QR을 읽으면 결과가 여기에 표시됩니다.</p>
+                </div>
+                <div class="result-box">
+                  <strong data-i18n="cameraStatusTitle">카메라 상태</strong>
+                  <p id="camera-status">카메라를 열면 실시간 QR 확인과 리얼 벤치마킹을 실행할 수 있습니다.</p>
+                </div>
+              </div>
+              <div class="card stack-gap">
+                <h2 data-i18n="previewBenchmarkTitle">Preview & Benchmark</h2>
+                <div class="qr-preview preview-stack">
+                  <img id="qr-image" alt="Generated QR code preview" />
+                  <video id="camera-preview" class="hidden" autoplay playsinline muted></video>
+                </div>
+                <div class="result-box stack-gap">
+                  <div>
+                    <strong data-i18n="benchmarkResultTitle">벤치마킹 결과</strong>
+                    <ul id="benchmark-list" class="benchmark-list empty-state"><li data-i18n="benchmarkPlaceholder">버튼을 누르면 서로 다른 payload 기준 QR 생성 시간을 측정합니다.</li></ul>
+                  </div>
+                  <div>
+                    <strong data-i18n="realBenchmarkResultTitle">리얼 벤치마킹 결과</strong>
+                    <ul id="real-benchmark-list" class="benchmark-list empty-state"><li data-i18n="realBenchmarkPlaceholder">카메라를 연 뒤 버튼을 누르면 실제 카메라 프레임으로 QR 인식 성능을 반복 측정합니다.</li></ul>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div id="task-loading" class="skeleton-list"></div>
-          <ul id="task-list" class="task-list hidden"></ul>
-          <p id="task-empty" class="empty hidden">No tasks match this filter. Try changing filters or search.</p>
-        </article>
+            <canvas id="qr-canvas" class="hidden-canvas"></canvas>
+          </section>
 
-        <article class="card glass calendar">
-          <div class="section-head">
-            <h3>Schedule</h3>
-            <span class="pill">Today</span>
-          </div>
-          <ul id="schedule-list" class="schedule-list"></ul>
-        </article>
+          <section class="panel" data-tab-panel="text">
+            <div class="card stack-gap">
+              <h2 data-i18n="textTitle">텍스트 카운터+</h2>
+              <label class="field">
+                <span data-i18n="textInputLabel">텍스트 입력</span>
+                <textarea id="text-input" rows="10">여기에 텍스트를 입력해 보세요.</textarea>
+              </label>
+              <div class="button-row">
+                <button id="text-trim-lines-button" type="button">Trim lines</button>
+                <button id="text-remove-empty-button" type="button">Remove empty lines</button>
+                <button id="text-dedupe-lines-button" type="button">Deduplicate lines</button>
+                <button id="text-sort-lines-button" type="button">Sort lines</button>
+                <button id="text-upper-button" type="button">UPPER</button>
+                <button id="text-lower-button" type="button">lower</button>
+              </div>
+              <div class="stats-grid">
+                <div class="stat-card"><span data-i18n="charCount">글자수</span><strong id="char-count">0</strong></div>
+                <div class="stat-card"><span data-i18n="byteCount">바이트수 (UTF-8)</span><strong id="byte-count">0</strong></div>
+                <div class="stat-card"><span data-i18n="lineCount">줄 수</span><strong id="line-count">0</strong></div>
+                <div class="stat-card"><span data-i18n="trimmedCount">공백 제외</span><strong id="trimmed-count">0</strong></div>
+                <div class="stat-card"><span data-i18n="wordCount">단어 수</span><strong id="word-count">0</strong></div>
+                <div class="stat-card"><span data-i18n="sentenceCount">문장 수</span><strong id="sentence-count">0</strong></div>
+                <div class="stat-card"><span data-i18n="paragraphCount">문단 수</span><strong id="paragraph-count">0</strong></div>
+                <div class="stat-card"><span data-i18n="readingTime">예상 읽기 시간</span><strong id="reading-time">0s</strong></div>
+              </div>
+            </div>
+          </section>
 
-        <article class="card glass focus-panel">
-          <div class="section-head">
-            <h3>Focus Timer</h3>
-            <span id="focus-state" class="pill accent">Ready</span>
-          </div>
-          <p id="focus-time" class="focus-time">25:00</p>
-          <div class="button-row">
-            <button id="focus-start">Start</button>
-            <button id="focus-pause" class="ghost">Pause</button>
-            <button id="focus-reset" class="ghost">Reset</button>
-          </div>
-          <p class="muted">Protect one block for meaningful work. Notifications muted in Focus Mode.</p>
-        </article>
+          <section class="panel" data-tab-panel="json">
+            <div class="grid-two">
+              <div class="card stack-gap">
+                <h2 data-i18n="jsonInputTitle">JSON 입력</h2>
+                <label class="field">
+                  <span data-i18n="jsonRawLabel">원본 입력</span>
+                  <textarea id="json-input" rows="16" spellcheck="false">"name": "tool-box"</textarea>
+                </label>
+              </div>
+              <div class="card stack-gap">
+                <h2 data-i18n="jsonPrettyTitle">Pretty Viewer</h2>
+                <div class="button-row">
+                  <button id="json-format-button" type="button">Format</button>
+                  <button id="json-minify-button" type="button">Minify</button>
+                  <button id="json-copy-button" type="button">Copy</button>
+                </div>
+                <div id="json-error" class="result-box error-box hidden"><strong data-i18n="jsonErrorTitle">파싱 오류</strong><p></p></div>
+                <pre id="json-output" class="json-output"></pre>
+              </div>
+            </div>
+          </section>
 
-        <article class="card glass notes-panel">
-          <div class="section-head">
-            <h3>Quick Capture</h3>
-            <span class="pill">⌘K</span>
-          </div>
-          <label class="visually-hidden" for="note-input">Write note</label>
-          <textarea id="note-input" rows="4" placeholder="Capture an idea, commitment, or follow-up..."></textarea>
-          <div class="button-row">
-            <button id="add-note">Save Note</button>
-          </div>
-          <ul id="note-list" class="note-list"></ul>
-          <p id="note-empty" class="empty">No notes yet. Capture your first thought.</p>
-        </article>
-
-        <article class="card glass habits-panel">
-          <div class="section-head">
-            <h3>Routine Tracker</h3>
-            <span class="pill">Daily</span>
-          </div>
-          <ul id="habit-list" class="habit-list"></ul>
-        </article>
-
-        <article class="card glass insights-panel">
-          <div class="section-head">
-            <h3>Insights</h3>
-            <span class="pill">This week</span>
-          </div>
-          <div class="insight-bars" id="insight-bars"></div>
-        </article>
-      </section>
-    </main>
-
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+          <section class="panel" data-tab-panel="smartthings">
+            <div class="card stack-gap">
+              <div class="sub-tab-bar">
+                <button class="sub-tab active" data-sub-tab-target="extract" data-i18n="smartExtractTab">Extract tpk file from Cosmos URL</button>
+              </div>
+              <section class="sub-panel active" data-sub-tab-panel="extract">
+                <h2 data-i18n="smartExtractTitle">Extract tpk file from Cosmos URL</h2>
+                <label class="field">
+                  <span data-i18n="smartCosmosLabel">Cosmos URL</span>
+                  <input id="cosmos-url-input" type="url" value="http://repos.vd.sec.samsung.net/priv/168.219.245.191:81/PRV/builds/b981/17413981/artifacts/tizen_20260322.17413981/" />
+                </label>
+                <div class="button-row">
+                  <button id="extract-tpk-button" type="button" data-i18n="smartExtractButton">추출 시작</button>
+                  <a id="download-tpk-link" class="secondary-button hidden" href="#" data-i18n="smartDownloadButton">TPK 다운로드</a>
+                </div>
+                <div class="result-box">
+                  <strong data-i18n="smartStatusTitle">진행 상태</strong>
+                  <p id="smartthings-status" data-i18n="smartReady">준비됨</p>
+                  <pre id="smartthings-help" class="smartthings-help hidden"></pre>
+                </div>
+              </section>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
   </body>
 </html>
