@@ -11,7 +11,9 @@
   </head>
   <body>
     <div class="dashboard-shell">
-      <aside class="side-rail card">
+      <button id="menu-toggle" class="menu-toggle" type="button" aria-controls="side-rail" aria-expanded="false">☰ Menu</button>
+      <div id="menu-backdrop" class="menu-backdrop" hidden></div>
+      <aside id="side-rail" class="side-rail card" aria-label="도구 메뉴">
         <div class="brand-block">
           <p class="eyebrow">AATROX STYLE</p>
           <strong>Tool Box</strong>
@@ -24,6 +26,14 @@
           <button class="tab" data-tab-target="smartthings" data-i18n="tabSmartthings">SmartThings TV</button>
         </nav>
         <div class="rail-summary">
+          <div class="summary-card">
+            <span data-i18n="quickSection">Quick</span>
+            <button id="quick-qr-button" class="quick-link" type="button" data-i18n="quickQr">QR 생성기</button>
+            <button id="quick-text-button" class="quick-link" type="button" data-i18n="quickText">텍스트 카운터</button>
+            <button id="quick-json-button" class="quick-link" type="button" data-i18n="quickJson">JSON 포맷터</button>
+            <button id="quick-smartthings-button" class="quick-link" type="button" data-i18n="quickSmart">TPK 추출기</button>
+          </div>
+
           <div class="summary-card">
             <span>Theme</span>
             <strong>Neo Dark</strong>
@@ -234,6 +244,7 @@
                 <div class="result-box">
                   <strong data-i18n="smartStatusTitle">진행 상태</strong>
                   <p id="smartthings-status" data-i18n="smartReady">준비됨</p>
+                  <pre id="smartthings-help" class="smartthings-help hidden"></pre>
                 </div>
               </section>
             </div>

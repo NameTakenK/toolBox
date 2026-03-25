@@ -18,7 +18,8 @@ const translations = {
     realBenchmarkNeedCamera: '리얼 벤치마킹을 실행하려면 카메라를 먼저 열어 주세요.', realBenchmarkRunning: '리얼 벤치마킹 실행 중', realBenchmarkSuccess: '성공', realBenchmarkFailure: '실패', realBenchmarkDetector: '디코더',
     avgLabel: '평균', totalLabel: '총합', charsUnit: 'chars', iterationUnit: '회', benchmarkDone: '생성 벤치마킹 완료',
     smartExtractTab: 'Extract tpk file from Cosmos URL', smartExtractTitle: 'Extract tpk file from Cosmos URL', smartCosmosLabel: 'Cosmos URL', smartExtractButton: '추출 시작', smartDownloadButton: 'TPK 다운로드', smartStatusTitle: '진행 상태',
-    smartReady: '준비됨', smartStatusPreparing: '준비 중...', smartStatusExtracting: '추출 중...', smartStatusDone: '완료', smartStatusError: '오류',
+    smartReady: '준비됨', smartStatusPreparing: '준비 중...', smartStatusExtracting: '추출 중...', smartStatusDone: '완료', smartStatusError: '오류', smartWindowsHint: 'Windows 안내: 기본 CMD/Powershell에서는 rpm2cpio/cpio를 바로 사용할 수 없습니다. WSL(Ubuntu) 또는 Linux/macOS 환경에서 서버를 실행해 주세요.',
+    quickSection: '바로가기', quickQr: 'QR 생성기', quickText: '텍스트 카운터', quickJson: 'JSON 포맷터', quickSmart: 'TPK 추출기',
   },
   en: {
     heroTitle: 'Practical Tool Box for Developers', heroCopy: 'A focused utility suite for QR, text, JSON, and SmartThings workflows.',
@@ -35,13 +36,15 @@ const translations = {
     realBenchmarkNeedCamera: 'Open camera before real benchmark.', realBenchmarkRunning: 'Running real benchmark', realBenchmarkSuccess: 'Success', realBenchmarkFailure: 'Failure', realBenchmarkDetector: 'Detector',
     avgLabel: 'Average', totalLabel: 'Total', charsUnit: 'chars', iterationUnit: 'runs', benchmarkDone: 'Generation benchmark complete',
     smartExtractTab: 'Extract tpk file from Cosmos URL', smartExtractTitle: 'Extract tpk file from Cosmos URL', smartCosmosLabel: 'Cosmos URL', smartExtractButton: 'Start extraction', smartDownloadButton: 'Download TPK', smartStatusTitle: 'Status',
-    smartReady: 'Ready', smartStatusPreparing: 'Preparing...', smartStatusExtracting: 'Extracting...', smartStatusDone: 'Done', smartStatusError: 'Error',
+    smartReady: 'Ready', smartStatusPreparing: 'Preparing...', smartStatusExtracting: 'Extracting...', smartStatusDone: 'Done', smartStatusError: 'Error', smartWindowsHint: 'Windows note: rpm2cpio/cpio are not directly available in default CMD/Powershell. Run the server in WSL (Ubuntu) or Linux/macOS.',
+    quickSection: 'Quick access', quickQr: 'QR generator', quickText: 'Text counter', quickJson: 'JSON formatter', quickSmart: 'TPK extractor',
   },
 };
 
 const $ = (id) => document.getElementById(id);
 const tabButtons = document.querySelectorAll('[data-tab-target]');
 const tabPanels = document.querySelectorAll('[data-tab-panel]');
+const menuToggleButton = $('menu-toggle'); const sideRail = $('side-rail'); const menuBackdrop = $('menu-backdrop');
 const subTabButtons = document.querySelectorAll('[data-sub-tab-target]');
 const subTabPanels = document.querySelectorAll('[data-sub-tab-panel]');
 
@@ -57,7 +60,8 @@ const textTrimLinesButton = $('text-trim-lines-button'); const textRemoveEmptyBu
 const textSortLinesButton = $('text-sort-lines-button'); const textUpperButton = $('text-upper-button'); const textLowerButton = $('text-lower-button');
 const jsonInput = $('json-input'); const jsonOutput = $('json-output'); const jsonError = $('json-error'); const jsonErrorText = jsonError.querySelector('p');
 const jsonFormatButton = $('json-format-button'); const jsonMinifyButton = $('json-minify-button'); const jsonCopyButton = $('json-copy-button');
-const cosmosUrlInput = $('cosmos-url-input'); const extractTpkButton = $('extract-tpk-button'); const downloadTpkLink = $('download-tpk-link'); const smartthingsStatus = $('smartthings-status');
+const cosmosUrlInput = $('cosmos-url-input'); const extractTpkButton = $('extract-tpk-button'); const downloadTpkLink = $('download-tpk-link'); const smartthingsStatus = $('smartthings-status'); const smartthingsHelp = $('smartthings-help');
+const quickQrButton = $('quick-qr-button'); const quickTextButton = $('quick-text-button'); const quickJsonButton = $('quick-json-button'); const quickSmartthingsButton = $('quick-smartthings-button');
 
 const encoder = new TextEncoder(); const settingsStorageKey = 'tool-box-settings'; const systemThemeQuery = window.matchMedia('(prefers-color-scheme: light)');
 let currentLanguage = 'ko'; let currentTheme = 'dark'; let cameraStream = null; let liveScanInterval = null; let barcodeDetector = null;
@@ -69,6 +73,7 @@ function applyTranslations() {
   document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
   qrSizeLabel.textContent = `${t('sizeLabel')}: ${qrSize.value}px`;
   if (!smartthingsStatus.dataset.busy) setStatus(smartthingsStatus, t('smartReady'));
+  setSmartthingsHelp('');
 }
 function loadSettings() {
   try { const saved = JSON.parse(localStorage.getItem(settingsStorageKey) || '{}'); currentLanguage = saved.language || 'ko'; currentTheme = saved.theme || 'dark'; } catch {}
@@ -77,6 +82,26 @@ function loadSettings() {
 function persistSettings() { localStorage.setItem(settingsStorageKey, JSON.stringify({ language: currentLanguage, theme: currentTheme })); }
 function applyTheme() { document.documentElement.dataset.theme = currentTheme === 'system' ? (systemThemeQuery.matches ? 'light' : 'dark') : currentTheme; }
 function setStatus(el, message) { el.textContent = message; }
+function setSmartthingsHelp(message = '') {
+  if (!smartthingsHelp) return;
+  smartthingsHelp.textContent = message;
+  smartthingsHelp.classList.toggle('hidden', !message);
+}
+
+function activateTab(target) {
+  tabButtons.forEach((item) => item.classList.toggle('active', item.dataset.tabTarget === target));
+  tabPanels.forEach((panel) => panel.classList.toggle('active', panel.dataset.tabPanel === target));
+}
+function toggleMenu(forceOpen) {
+  const open = typeof forceOpen === 'boolean' ? forceOpen : !sideRail.classList.contains('open');
+  sideRail.classList.toggle('open', open);
+  menuToggleButton?.setAttribute('aria-expanded', String(open));
+  if (menuBackdrop) menuBackdrop.hidden = !open;
+}
+function closeMenuOnMobile() {
+  if (window.innerWidth <= 1080) toggleMenu(false);
+}
+
 const ensureQrLibrary = () => typeof window.QRCode !== 'undefined';
 const ensureReaderLibrary = () => typeof window.jsQR !== 'undefined';
 function getIterations() { const parsed = Number.parseInt(benchmarkIterationsInput.value, 10); const value = Number.isFinite(parsed) && parsed > 0 ? parsed : 100; benchmarkIterationsInput.value = String(value); return value; }
@@ -227,6 +252,7 @@ async function extractSmartThingsTpk() {
   extractTpkButton.disabled = true;
   setStatus(smartthingsStatus, `${t('smartStatusPreparing')} ${url}`);
   downloadTpkLink.classList.add('hidden');
+  setSmartthingsHelp('');
   try {
     setStatus(smartthingsStatus, t('smartStatusExtracting'));
     const response = await fetch('/api/smartthings/extract-tpk', {
@@ -239,7 +265,11 @@ async function extractSmartThingsTpk() {
     downloadTpkLink.classList.remove('hidden');
     setStatus(smartthingsStatus, `${t('smartStatusDone')}: ${result.fileName}`);
   } catch (error) {
-    setStatus(smartthingsStatus, `${t('smartStatusError')}: ${error.message}`);
+    const message = String(error.message || error);
+    setStatus(smartthingsStatus, `${t('smartStatusError')}: ${message}`);
+    if (/Windows에서는 기본 CMD\/Powershell/i.test(message) || (/rpm2cpio\/cpio/.test(message) && /Windows/i.test(message))) {
+      setSmartthingsHelp(t('smartWindowsHint'));
+    }
   } finally {
     extractTpkButton.disabled = false;
     delete smartthingsStatus.dataset.busy;
@@ -247,7 +277,8 @@ async function extractSmartThingsTpk() {
 }
 
 tabButtons.forEach((button) => button.addEventListener('click', () => {
-  const target = button.dataset.tabTarget; tabButtons.forEach((item) => item.classList.toggle('active', item === button)); tabPanels.forEach((panel) => panel.classList.toggle('active', panel.dataset.tabPanel === target));
+  activateTab(button.dataset.tabTarget);
+  closeMenuOnMobile();
 }));
 subTabButtons.forEach((button) => button.addEventListener('click', () => {
   const target = button.dataset.subTabTarget; subTabButtons.forEach((item) => item.classList.toggle('active', item === button)); subTabPanels.forEach((panel) => panel.classList.toggle('active', panel.dataset.subTabPanel === target));
@@ -274,6 +305,29 @@ jsonCopyButton.addEventListener('click', async () => {
   await navigator.clipboard.writeText(value);
 });
 languageSelect.addEventListener('change', () => { currentLanguage = languageSelect.value; persistSettings(); applyTranslations(); });
+menuToggleButton?.addEventListener('click', () => toggleMenu());
+menuBackdrop?.addEventListener('click', () => toggleMenu(false));
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') toggleMenu(false); });
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 1080) {
+    sideRail.classList.remove('open');
+    menuBackdrop.hidden = true;
+    menuToggleButton?.setAttribute('aria-expanded', 'false');
+  }
+});
+quickQrButton?.addEventListener('click', () => {
+  activateTab('qr');
+  qrInput.value = qrInput.value || window.location.href;
+  renderQr();
+  closeMenuOnMobile();
+});
+quickTextButton?.addEventListener('click', () => { activateTab('text'); textInput.focus(); closeMenuOnMobile(); });
+quickJsonButton?.addEventListener('click', () => {
+  activateTab('json');
+  try { setJsonValue(JSON.stringify(parseJsonOrThrow(), null, 2)); } catch {}
+  closeMenuOnMobile();
+});
+quickSmartthingsButton?.addEventListener('click', () => { activateTab('smartthings'); closeMenuOnMobile(); });
 themeSelect.addEventListener('change', () => { currentTheme = themeSelect.value; persistSettings(); applyTheme(); });
 systemThemeQuery.addEventListener('change', () => { if (currentTheme === 'system') applyTheme(); });
 window.addEventListener('beforeunload', stopCamera);
