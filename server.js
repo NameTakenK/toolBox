@@ -19,6 +19,8 @@ const mimeTypes = {
 
 async function ensureDir(dirPath) { await fsp.mkdir(dirPath, { recursive: true }); }
 
+const commandRuntime = { mode: 'native' };
+
 function sendJson(res, statusCode, payload) {
   res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(payload));
@@ -57,6 +59,9 @@ async function downloadFile(url, targetPath) {
 }
 
 function runCommand(command, args, cwd) {
+  if (commandRuntime.mode === 'wsl') {
+    return runCommandInWsl(command, args, cwd);
+  }
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { cwd });
     let stderr = '';
@@ -69,7 +74,25 @@ function runCommand(command, args, cwd) {
   });
 }
 
+function shellQuote(value) {
+  return `'${String(value).replace(/'/g, `'\\''`)}'`;
+}
+
+async function toWslPath(targetPath) {
+  const { stdout } = await execFileAsync('wsl', ['wslpath', '-a', targetPath]);
+  return stdout.trim();
+}
+
+async function runCommandInWsl(command, args, cwd) {
+  const wslCwd = await toWslPath(cwd);
+  const fullCommand = [command, ...args].map(shellQuote).join(' ');
+  await execFileAsync('wsl', ['bash', '-lc', `cd ${shellQuote(wslCwd)} && ${fullCommand}`]);
+}
+
 function extractRpmToDir(rpmPath, cwd) {
+  if (commandRuntime.mode === 'wsl') {
+    return extractRpmToDirInWsl(rpmPath, cwd);
+  }
   return new Promise((resolve, reject) => {
     const rpm = spawn('rpm2cpio', [rpmPath], { cwd });
     const cpio = spawn('cpio', ['-idmv'], { cwd });
@@ -84,6 +107,12 @@ function extractRpmToDir(rpmPath, cwd) {
       reject(new Error(`cpio extraction failed (${code})${stderr ? `: ${stderr.trim()}` : ''}`));
     });
   });
+}
+
+async function extractRpmToDirInWsl(rpmPath, cwd) {
+  const [wslRpmPath, wslCwd] = await Promise.all([toWslPath(rpmPath), toWslPath(cwd)]);
+  const command = `cd ${shellQuote(wslCwd)} && rpm2cpio ${shellQuote(wslRpmPath)} | cpio -idmv`;
+  await execFileAsync('wsl', ['bash', '-lc', command]);
 }
 
 async function findFileRecursive(dir, pattern) {
@@ -118,10 +147,20 @@ async function ensureExtractCommands() {
   try {
     await execFileAsync(locator, ['rpm2cpio']);
     await execFileAsync(locator, ['cpio']);
+    commandRuntime.mode = 'native';
   } catch {
-    const winHint = 'Windows에서는 기본 CMD/Powershell 환경에서 rpm2cpio/cpio를 바로 사용할 수 없습니다. WSL(Ubuntu) 또는 Linux/macOS 환경에서 실행해 주세요.';
+    if (process.platform === 'win32') {
+      try {
+        await execFileAsync('wsl', ['bash', '-lc', 'command -v rpm2cpio && command -v cpio']);
+        commandRuntime.mode = 'wsl';
+        return;
+      } catch {
+        const winHint = 'Windows에서는 rpm2cpio/cpio를 기본 셸에서 찾지 못했습니다. WSL(Ubuntu)에 rpm2cpio/cpio를 설치한 뒤 다시 실행해 주세요.';
+        throw new Error(winHint);
+      }
+    }
     const unixHint = 'rpm2cpio/cpio 명령을 먼저 설치해 주세요. Ubuntu/Debian: sudo apt-get install rpm2cpio cpio';
-    throw new Error(process.platform === 'win32' ? winHint : unixHint);
+    throw new Error(unixHint);
   }
 }
 
