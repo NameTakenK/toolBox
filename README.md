@@ -34,7 +34,7 @@ npm run dev
 - QR 라이브러리는 CDN을 사용합니다.
 - 카메라 기능과 리얼 벤치마킹은 브라우저 카메라 권한이 필요합니다.
 - SmartThings 추출 API는 서버 실행 환경에 `rpm2cpio`, `cpio` 명령이 설치되어 있어야 동작합니다.
-- Windows 기본 셸(CMD/PowerShell)에서는 해당 명령이 없어 실패할 수 있으므로 WSL 또는 Linux/macOS 환경을 권장합니다.
+- Windows에서 서버를 CMD/PowerShell로 실행해도, WSL(Ubuntu)에 `rpm2cpio`, `cpio`가 설치되어 있으면 자동으로 WSL 명령을 사용해 추출을 진행합니다.
 
 ## SmartThings 추출 의존 명령어
 
