@@ -19,7 +19,7 @@ const mimeTypes = {
 
 async function ensureDir(dirPath) { await fsp.mkdir(dirPath, { recursive: true }); }
 
-const commandRuntime = { mode: 'native' };
+const commandRuntime = { mode: 'native', sevenZipPath: null };
 
 function sendJson(res, statusCode, payload) {
   res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -59,9 +59,17 @@ async function downloadFile(url, targetPath) {
 }
 
 function runCommand(command, args, cwd) {
+  if (commandRuntime.mode === '7zip') {
+    const actualCommand = command === '7z' ? commandRuntime.sevenZipPath : command;
+    return runNativeCommand(actualCommand, args, cwd);
+  }
   if (commandRuntime.mode === 'wsl') {
     return runCommandInWsl(command, args, cwd);
   }
+  return runNativeCommand(command, args, cwd);
+}
+
+function runNativeCommand(command, args, cwd) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { cwd });
     let stderr = '';
@@ -90,6 +98,9 @@ async function runCommandInWsl(command, args, cwd) {
 }
 
 function extractRpmToDir(rpmPath, cwd) {
+  if (commandRuntime.mode === '7zip') {
+    return runCommand('7z', ['x', rpmPath, `-o${cwd}`, '-y'], cwd);
+  }
   if (commandRuntime.mode === 'wsl') {
     return extractRpmToDirInWsl(rpmPath, cwd);
   }
@@ -143,6 +154,32 @@ async function findAllFilesRecursive(dir, pattern, acc = []) {
 }
 
 async function ensureExtractCommands() {
+  if (process.platform === 'win32') {
+    const sevenZipCandidates = [
+      process.env.SEVEN_ZIP_PATH,
+      'C:\\Program Files\\7-Zip\\7z.exe',
+      'C:\\Program Files (x86)\\7-Zip\\7z.exe',
+    ].filter(Boolean);
+    for (const candidate of sevenZipCandidates) {
+      try {
+        await fsp.access(candidate, fs.constants.X_OK);
+        commandRuntime.mode = '7zip';
+        commandRuntime.sevenZipPath = candidate;
+        return;
+      } catch {
+        // Continue to next candidate.
+      }
+    }
+    try {
+      await execFileAsync('where', ['7z']);
+      commandRuntime.mode = '7zip';
+      commandRuntime.sevenZipPath = '7z';
+      return;
+    } catch {
+      // Continue to rpm2cpio/cpio fallback checks below.
+    }
+  }
+
   const locator = process.platform === 'win32' ? 'where' : 'which';
   try {
     await execFileAsync(locator, ['rpm2cpio']);
@@ -155,7 +192,7 @@ async function ensureExtractCommands() {
         commandRuntime.mode = 'wsl';
         return;
       } catch {
-        const winHint = 'Windows에서는 rpm2cpio/cpio를 기본 셸에서 찾지 못했습니다. WSL(Ubuntu)에 rpm2cpio/cpio를 설치한 뒤 다시 실행해 주세요.';
+        const winHint = 'Windows에서는 rpm2cpio/cpio를 찾지 못했습니다. 7-Zip(예: C:\\Program Files\\7-Zip\\7z.exe)을 설치하거나 WSL(Ubuntu)에 rpm2cpio/cpio를 설치한 뒤 다시 실행해 주세요.';
         throw new Error(winHint);
       }
     }
@@ -199,17 +236,21 @@ async function handleExtractTpk(req, res) {
 
     await extractRpmToDir(rpmPath, workDir);
 
-    const cpioCandidates = await findAllFilesRecursive(workDir, /\.cpio$/i);
-    const cpioFile = cpioCandidates.sort((a, b) => {
-      const aPriority = /(?:payload|rootfs|image)\.cpio$/i.test(a) ? 1 : 0;
-      const bPriority = /(?:payload|rootfs|image)\.cpio$/i.test(b) ? 1 : 0;
+    const payloadCandidates = await findAllFilesRecursive(workDir, /(?:\.cpio$|payload(?:\.[^/\\]+)?$|rootfs(?:\.[^/\\]+)?$|image(?:\.[^/\\]+)?$)/i);
+    const cpioFile = payloadCandidates.sort((a, b) => {
+      const aPriority = /(?:payload|rootfs|image)(?:\.[^/\\]+)?$/i.test(path.basename(a)) ? 1 : 0;
+      const bPriority = /(?:payload|rootfs|image)(?:\.[^/\\]+)?$/i.test(path.basename(b)) ? 1 : 0;
       if (aPriority !== bPriority) return bPriority - aPriority;
       return b.localeCompare(a);
     })[0];
-    if (!cpioFile) throw new Error('cpio file not found after rpm extraction');
+    if (!cpioFile) throw new Error('cpio payload file not found after rpm extraction');
     const cpioDir = path.join(workDir, 'cpio-expanded');
     await ensureDir(cpioDir);
-    await runCommand('cpio', ['-idmv', '-F', cpioFile], cpioDir);
+    if (commandRuntime.mode === '7zip') {
+      await runCommand('7z', ['x', cpioFile, `-o${cpioDir}`, '-y'], cpioDir);
+    } else {
+      await runCommand('cpio', ['-idmv', '-F', cpioFile], cpioDir);
+    }
 
     const preloadDir = await findFileRecursive(cpioDir, /(?:^|[/\\])usr[/\\]apps[/\\]\.preload-rw-tpk$/i);
     if (!preloadDir) throw new Error('usr/apps/.preload-rw-tpk directory was not found');
