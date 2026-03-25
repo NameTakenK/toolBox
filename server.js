@@ -198,6 +198,18 @@ async function findAllFilesRecursive(dir, pattern, acc = []) {
   return acc;
 }
 
+async function findAllDirsRecursive(dir, pattern, acc = []) {
+  const entries = await fsp.readdir(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (pattern.test(entry.name) || pattern.test(fullPath)) acc.push(fullPath);
+      await findAllDirsRecursive(fullPath, pattern, acc);
+    }
+  }
+  return acc;
+}
+
 async function ensureExtractCommands() {
   const locator = process.platform === 'win32' ? 'where' : 'which';
   try {
@@ -278,8 +290,14 @@ async function handleExtractTpk(req, res) {
     await ensureDir(cpioDir);
     await runCommand('cpio', ['-idmv', '-F', cpioFile], cpioDir);
 
-    const preloadDir = await findFileRecursive(cpioDir, /(?:^|[/\\])usr[/\\]apps[/\\]\.preload-rw-tpk$/i);
-    if (!preloadDir) throw new Error('usr/apps/.preload-rw-tpk directory was not found');
+    const preloadCandidates = await findAllDirsRecursive(cpioDir, /(?:^|[/\\])\.preload-rw-tpk$/i);
+    const preloadDir = preloadCandidates.find((candidate) => path.basename(candidate).toLowerCase() === '.preload-rw-tpk')
+      || await findFileRecursive(cpioDir, /(?:^|[/\\])usr[/\\]apps[/\\]\.preload-rw-tpk$/i);
+    if (!preloadDir) {
+      const notableDirs = await findAllDirsRecursive(cpioDir, /(?:^|[/\\])(?:usr|apps|preload|tpk)(?:$|[/\\])/i);
+      const preview = notableDirs.slice(0, 20).map((item) => path.relative(cpioDir, item) || '.').join(', ');
+      throw new Error(`.preload-rw-tpk directory was not found in extracted payload${preview ? ` (sample paths: ${preview})` : ''}`);
+    }
     const tpkCandidates = await findAllFilesRecursive(preloadDir, /com\.samsung\.tv\.SmartThingsApp-.*\.tpk$/i);
     const tpkFile = pickLatestSmartThingsTpk(tpkCandidates);
     if (!tpkFile) throw new Error('SmartThings TPK not found in extracted files');
