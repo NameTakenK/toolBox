@@ -3,6 +3,7 @@ const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
 const os = require('os');
+const crypto = require('crypto');
 const { execFile, spawn } = require('child_process');
 const { promisify } = require('util');
 
@@ -11,6 +12,11 @@ const host = '127.0.0.1';
 const port = Number(process.env.PORT || 3000);
 const root = __dirname;
 const downloadsDir = path.join(root, '.downloads');
+const dataDir = path.join(root, '.data');
+const newsDbPath = path.join(dataDir, 'news-db.json');
+const defaultNewsState = { scheduleMinutes: 0, lastCollectedAt: null, items: [] };
+const newsFeedUrl = 'https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko';
+let newsScheduleTimer = null;
 
 const mimeTypes = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8',
@@ -320,11 +326,173 @@ async function handleExtractTpk(req, res) {
   }
 }
 
+function decodeXmlEntities(value = '') {
+  return value
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, '\'');
+}
+
+function stripHtml(value = '') {
+  return decodeXmlEntities(value).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function parseTag(itemXml, tagName) {
+  const matched = itemXml.match(new RegExp(`<${tagName}(?:\\s[^>]*)?>([\\s\\S]*?)</${tagName}>`, 'i'));
+  return matched ? matched[1].trim() : '';
+}
+
+function parseRssItems(xmlText) {
+  const items = [];
+  const itemBlocks = xmlText.match(/<item>[\s\S]*?<\/item>/gi) || [];
+  for (const block of itemBlocks.slice(0, 10)) {
+    const titleRaw = parseTag(block, 'title');
+    const descriptionRaw = parseTag(block, 'description');
+    const pubDateRaw = parseTag(block, 'pubDate');
+    const sourceRaw = parseTag(block, 'source') || 'Google News';
+    const body = stripHtml(descriptionRaw);
+    const publishedAt = new Date(pubDateRaw);
+    items.push({
+      id: crypto.randomUUID(),
+      date: Number.isNaN(publishedAt.getTime()) ? new Date().toISOString() : publishedAt.toISOString(),
+      title: stripHtml(titleRaw),
+      body,
+      source: stripHtml(sourceRaw),
+      createdAt: new Date().toISOString(),
+    });
+  }
+  return items;
+}
+
+async function readNewsState() {
+  try {
+    const raw = await fsp.readFile(newsDbPath, 'utf-8');
+    const parsed = JSON.parse(raw);
+    return {
+      scheduleMinutes: Number(parsed.scheduleMinutes) || 0,
+      lastCollectedAt: parsed.lastCollectedAt || null,
+      items: Array.isArray(parsed.items) ? parsed.items : [],
+    };
+  } catch {
+    return { ...defaultNewsState };
+  }
+}
+
+async function writeNewsState(state) {
+  await ensureDir(dataDir);
+  await fsp.writeFile(newsDbPath, JSON.stringify(state, null, 2), 'utf-8');
+}
+
+async function collectHotNews() {
+  const response = await fetch(newsFeedUrl);
+  if (!response.ok) throw new Error(`뉴스 RSS를 가져오지 못했습니다 (${response.status})`);
+  const xmlText = await response.text();
+  const latestItems = parseRssItems(xmlText);
+  if (!latestItems.length) throw new Error('수집할 뉴스가 없습니다.');
+
+  const state = await readNewsState();
+  const dedupeKey = (item) => `${item.date}|${item.title}|${item.source}`;
+  const existing = new Set(state.items.map(dedupeKey));
+  const merged = [...latestItems.filter((item) => !existing.has(dedupeKey(item))), ...state.items];
+  const nextState = {
+    ...state,
+    lastCollectedAt: new Date().toISOString(),
+    items: merged.slice(0, 300),
+  };
+  await writeNewsState(nextState);
+  return { collected: latestItems.length, state: nextState };
+}
+
+async function configureNewsSchedule(scheduleMinutes) {
+  if (newsScheduleTimer) {
+    clearInterval(newsScheduleTimer);
+    newsScheduleTimer = null;
+  }
+  if (scheduleMinutes > 0) {
+    newsScheduleTimer = setInterval(() => {
+      collectHotNews().catch((error) => console.error('[news-collector] schedule collect failed:', error.message));
+    }, scheduleMinutes * 60 * 1000);
+  }
+  const state = await readNewsState();
+  const nextState = { ...state, scheduleMinutes };
+  await writeNewsState(nextState);
+  return nextState;
+}
+
 const server = http.createServer(async (req, res) => {
   const requestUrl = new URL(req.url, `http://${host}:${port}`);
 
   if (req.method === 'POST' && requestUrl.pathname === '/api/smartthings/extract-tpk') {
     return handleExtractTpk(req, res);
+  }
+
+  if (req.method === 'GET' && requestUrl.pathname === '/api/private/news') {
+    const state = await readNewsState();
+    return sendJson(res, 200, state);
+  }
+
+  if (req.method === 'POST' && requestUrl.pathname === '/api/private/news/collect') {
+    try {
+      const result = await collectHotNews();
+      return sendJson(res, 200, result.state);
+    } catch (error) {
+      return sendJson(res, 500, { error: error.message });
+    }
+  }
+
+  if (req.method === 'POST' && requestUrl.pathname === '/api/private/news/schedule') {
+    try {
+      const bodyRaw = await readBody(req);
+      const { scheduleMinutes } = JSON.parse(bodyRaw || '{}');
+      const numeric = Number(scheduleMinutes);
+      if (!Number.isFinite(numeric) || numeric < 0) return sendJson(res, 400, { error: 'scheduleMinutes must be 0 or greater' });
+      const state = await configureNewsSchedule(Math.floor(numeric));
+      return sendJson(res, 200, state);
+    } catch (error) {
+      return sendJson(res, 500, { error: error.message });
+    }
+  }
+
+  if (req.method === 'PUT' && requestUrl.pathname.startsWith('/api/private/news/')) {
+    try {
+      const id = decodeURIComponent(requestUrl.pathname.replace('/api/private/news/', ''));
+      const bodyRaw = await readBody(req);
+      const payload = JSON.parse(bodyRaw || '{}');
+      const state = await readNewsState();
+      const index = state.items.findIndex((item) => item.id === id);
+      if (index === -1) return sendJson(res, 404, { error: 'Item not found' });
+      const nextItem = {
+        ...state.items[index],
+        date: typeof payload.date === 'string' ? payload.date : state.items[index].date,
+        title: typeof payload.title === 'string' ? payload.title : state.items[index].title,
+        body: typeof payload.body === 'string' ? payload.body : state.items[index].body,
+        source: typeof payload.source === 'string' ? payload.source : state.items[index].source,
+        updatedAt: new Date().toISOString(),
+      };
+      state.items[index] = nextItem;
+      await writeNewsState(state);
+      return sendJson(res, 200, nextItem);
+    } catch (error) {
+      return sendJson(res, 500, { error: error.message });
+    }
+  }
+
+  if (req.method === 'DELETE' && requestUrl.pathname === '/api/private/news') {
+    try {
+      const bodyRaw = await readBody(req);
+      const { ids } = JSON.parse(bodyRaw || '{}');
+      if (!Array.isArray(ids) || !ids.length) return sendJson(res, 400, { error: 'ids is required' });
+      const state = await readNewsState();
+      const idSet = new Set(ids);
+      state.items = state.items.filter((item) => !idSet.has(item.id));
+      await writeNewsState(state);
+      return sendJson(res, 200, state);
+    } catch (error) {
+      return sendJson(res, 500, { error: error.message });
+    }
   }
 
   if (requestUrl.pathname.startsWith('/downloads/')) {
@@ -362,3 +530,8 @@ const server = http.createServer(async (req, res) => {
 server.listen(port, host, () => {
   console.log(`Tool Box server running at http://${host}:${port}`);
 });
+
+(async () => {
+  const state = await readNewsState();
+  if (state.scheduleMinutes > 0) await configureNewsSchedule(state.scheduleMinutes);
+})();

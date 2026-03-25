@@ -24,6 +24,7 @@
           <button class="tab" data-tab-target="text" data-i18n="tabText">텍스트 카운터</button>
           <button class="tab" data-tab-target="json" data-i18n="tabJson">JSON Pretty Viewer</button>
           <button class="tab" data-tab-target="smartthings" data-i18n="tabSmartthings">SmartThings TV</button>
+          <button class="tab" data-tab-target="private" data-i18n="tabPrivate">Private</button>
         </nav>
         <div class="rail-summary">
           <div class="summary-card">
@@ -32,6 +33,7 @@
             <button id="quick-text-button" class="quick-link" type="button" data-i18n="quickText">텍스트 카운터</button>
             <button id="quick-json-button" class="quick-link" type="button" data-i18n="quickJson">JSON 포맷터</button>
             <button id="quick-smartthings-button" class="quick-link" type="button" data-i18n="quickSmart">TPK 추출기</button>
+            <button id="quick-private-button" class="quick-link" type="button" data-i18n="quickPrivate">뉴스 수집</button>
           </div>
 
           <div class="summary-card">
@@ -245,6 +247,38 @@
                   <strong data-i18n="smartStatusTitle">진행 상태</strong>
                   <p id="smartthings-status" data-i18n="smartReady">준비됨</p>
                   <pre id="smartthings-help" class="smartthings-help hidden"></pre>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section class="panel" data-tab-panel="private">
+            <div class="card stack-gap">
+              <div class="sub-tab-bar">
+                <button class="sub-tab active" data-sub-tab-target="news-collector">뉴스 수집</button>
+              </div>
+              <section class="sub-panel active" data-sub-tab-panel="news-collector">
+                <h2>뉴스 수집</h2>
+                <div class="grid-two compact-grid">
+                  <label class="field inline-field">
+                    <span>수집 주기(분)</span>
+                    <input id="news-schedule-minutes" type="number" min="0" step="1" value="0" />
+                  </label>
+                  <div class="button-row">
+                    <button id="news-schedule-save-button" type="button">일정 저장</button>
+                    <button id="news-collect-now-button" type="button">지금 수집</button>
+                  </div>
+                </div>
+                <div class="button-row">
+                  <button id="news-delete-selected-button" type="button">선택 삭제</button>
+                  <button id="news-export-selected-button" type="button">JSON 출력 다운로드</button>
+                </div>
+                <div class="result-box">
+                  <strong>뉴스 수집 상태</strong>
+                  <p id="news-status-text">준비됨</p>
+                </div>
+                <div class="news-list-wrap">
+                  <ul id="news-list" class="news-list"></ul>
                 </div>
               </section>
             </div>
