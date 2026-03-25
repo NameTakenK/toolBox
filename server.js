@@ -19,7 +19,7 @@ const mimeTypes = {
 
 async function ensureDir(dirPath) { await fsp.mkdir(dirPath, { recursive: true }); }
 
-const commandRuntime = { mode: 'native' };
+const commandRuntime = { mode: 'native', sevenZipPath: null };
 
 function sendJson(res, statusCode, payload) {
   res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -59,6 +59,9 @@ async function downloadFile(url, targetPath) {
 }
 
 function runCommand(command, args, cwd) {
+  if (commandRuntime.mode === '7zip-cpio') {
+    return runCommandWith7Zip(command, args, cwd);
+  }
   if (commandRuntime.mode === 'wsl') {
     return runCommandInWsl(command, args, cwd);
   }
@@ -89,7 +92,21 @@ async function runCommandInWsl(command, args, cwd) {
   await execFileAsync('wsl', ['bash', '-lc', `cd ${shellQuote(wslCwd)} && ${fullCommand}`]);
 }
 
+async function runCommandWith7Zip(command, args, cwd) {
+  if (command !== 'cpio') {
+    throw new Error(`7-Zip 모드에서는 ${command} 명령을 지원하지 않습니다.`);
+  }
+  const cpioPathIndex = args.findIndex((arg) => arg === '-F');
+  if (cpioPathIndex === -1 || !args[cpioPathIndex + 1]) {
+    throw new Error('cpio 파일 경로를 찾지 못했습니다.');
+  }
+  await extractCpioWith7Zip(args[cpioPathIndex + 1], cwd);
+}
+
 function extractRpmToDir(rpmPath, cwd) {
+  if (commandRuntime.mode === '7zip-cpio') {
+    return extractRpmToDirWith7Zip(rpmPath, cwd);
+  }
   if (commandRuntime.mode === 'wsl') {
     return extractRpmToDirInWsl(rpmPath, cwd);
   }
@@ -113,6 +130,45 @@ async function extractRpmToDirInWsl(rpmPath, cwd) {
   const [wslRpmPath, wslCwd] = await Promise.all([toWslPath(rpmPath), toWslPath(cwd)]);
   const command = `cd ${shellQuote(wslCwd)} && rpm2cpio ${shellQuote(wslRpmPath)} | cpio -idmv`;
   await execFileAsync('wsl', ['bash', '-lc', command]);
+}
+
+async function extractRpmToDirWith7Zip(rpmPath, cwd) {
+  const cpioPath = path.join(cwd, `${path.basename(rpmPath, path.extname(rpmPath))}.cpio`);
+  await new Promise((resolve, reject) => {
+    const out = fs.createWriteStream(cpioPath);
+    const extractor = spawn(commandRuntime.sevenZipPath, ['x', '-so', rpmPath], { cwd });
+    let stderr = '';
+    let extractorClosed = false;
+    let streamFinished = false;
+    let closeCode = null;
+
+    const settleIfDone = () => {
+      if (!extractorClosed || !streamFinished) return;
+      if (closeCode === 0) {
+        resolve();
+        return;
+      }
+      reject(new Error(`7-Zip RPM extraction failed (${closeCode})${stderr ? `: ${stderr.trim()}` : ''}`));
+    };
+
+    extractor.stdout.pipe(out);
+    extractor.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
+    extractor.on('error', reject);
+    out.on('error', reject);
+    out.on('finish', () => {
+      streamFinished = true;
+      settleIfDone();
+    });
+    extractor.on('close', (code) => {
+      closeCode = code;
+      extractorClosed = true;
+      settleIfDone();
+    });
+  });
+}
+
+async function extractCpioWith7Zip(cpioPath, cwd) {
+  await execFileAsync(commandRuntime.sevenZipPath, ['x', '-y', cpioPath, `-o${cwd}`]);
 }
 
 async function findFileRecursive(dir, pattern) {
@@ -148,14 +204,25 @@ async function ensureExtractCommands() {
     await execFileAsync(locator, ['rpm2cpio']);
     await execFileAsync(locator, ['cpio']);
     commandRuntime.mode = 'native';
+    commandRuntime.sevenZipPath = null;
   } catch {
     if (process.platform === 'win32') {
+      const sevenZipPath = 'C:\\Program Files\\7-Zip\\7z.exe';
+      try {
+        await fsp.access(sevenZipPath, fs.constants.F_OK);
+        commandRuntime.mode = '7zip-cpio';
+        commandRuntime.sevenZipPath = sevenZipPath;
+        return;
+      } catch {
+        // no-op: fall through to WSL fallback below
+      }
       try {
         await execFileAsync('wsl', ['bash', '-lc', 'command -v rpm2cpio && command -v cpio']);
         commandRuntime.mode = 'wsl';
+        commandRuntime.sevenZipPath = null;
         return;
       } catch {
-        const winHint = 'Windows에서는 rpm2cpio/cpio를 기본 셸에서 찾지 못했습니다. WSL(Ubuntu)에 rpm2cpio/cpio를 설치한 뒤 다시 실행해 주세요.';
+        const winHint = 'Windows에서는 rpm2cpio/cpio를 찾지 못했습니다. 먼저 "C:\\Program Files\\7-Zip\\7z.exe"를 설치(또는 확인)해 rpm/cpio를 7-Zip으로 추출하거나, WSL(Ubuntu)에 rpm2cpio/cpio를 설치해 주세요.';
         throw new Error(winHint);
       }
     }
