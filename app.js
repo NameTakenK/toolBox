@@ -3,7 +3,7 @@ const translations = {
     heroTitle: '개발자를 위한 실전형 Tool Box',
     heroCopy: 'QR, 텍스트, JSON, SmartThings 작업을 빠르게 처리할 수 있는 생산성 도구 모음입니다.',
     languageLabel: '언어', themeLabel: '테마', themeDark: '다크', themeLight: '라이트', themeSystem: '시스템',
-    tabQr: 'QR 도구', tabText: '텍스트 카운터', tabJson: 'JSON Pretty Viewer', tabSmartthings: 'SmartThings TV',
+    tabQr: 'QR 도구', tabText: '텍스트 카운터', tabJson: 'JSON Pretty Viewer', tabSmartthings: 'SmartThings TV', tabPrivate: 'Private',
     qrToolTitle: 'QR Maker & Reader', qrContentLabel: 'QR 내용', iterationLabel: '반복 횟수', qrErrorLevel: '오류 보정', qrMargin: '여백', qrVersion: '버전', qrDarkColor: '전경색', qrLightColor: '배경색',
     benchmarkButton: '벤치마킹 실행', realBenchmarkButton: '리얼 벤치마킹 실행', downloadButton: 'PNG 다운로드', uploadLabel: 'QR 이미지 업로드',
     cameraStartButton: '카메라 열기', cameraStopButton: '카메라 닫기', readerResultTitle: '리더 결과', cameraStatusTitle: '카메라 상태', previewBenchmarkTitle: 'Preview & Benchmark',
@@ -19,12 +19,12 @@ const translations = {
     avgLabel: '평균', totalLabel: '총합', charsUnit: 'chars', iterationUnit: '회', benchmarkDone: '생성 벤치마킹 완료',
     smartExtractTab: 'Extract tpk file from Cosmos URL', smartExtractTitle: 'Extract tpk file from Cosmos URL', smartCosmosLabel: 'Cosmos URL', smartExtractButton: '추출 시작', smartDownloadButton: 'TPK 다운로드', smartStatusTitle: '진행 상태',
     smartReady: '준비됨', smartStatusPreparing: '준비 중...', smartStatusExtracting: '추출 중...', smartStatusDone: '완료', smartStatusError: '오류', smartWindowsHint: 'Windows 안내: 기본 CMD/Powershell에서는 rpm2cpio/cpio를 바로 사용할 수 없습니다. WSL(Ubuntu) 또는 Linux/macOS 환경에서 서버를 실행해 주세요.',
-    quickSection: '바로가기', quickQr: 'QR 생성기', quickText: '텍스트 카운터', quickJson: 'JSON 포맷터', quickSmart: 'TPK 추출기',
+    quickSection: '바로가기', quickQr: 'QR 생성기', quickText: '텍스트 카운터', quickJson: 'JSON 포맷터', quickSmart: 'TPK 추출기', quickPrivate: '뉴스 수집',
   },
   en: {
     heroTitle: 'Practical Tool Box for Developers', heroCopy: 'A focused utility suite for QR, text, JSON, and SmartThings workflows.',
     languageLabel: 'Language', themeLabel: 'Theme', themeDark: 'Dark', themeLight: 'Light', themeSystem: 'System',
-    tabQr: 'QR Tools', tabText: 'Text Counter', tabJson: 'JSON Pretty Viewer', tabSmartthings: 'SmartThings TV',
+    tabQr: 'QR Tools', tabText: 'Text Counter', tabJson: 'JSON Pretty Viewer', tabSmartthings: 'SmartThings TV', tabPrivate: 'Private',
     qrToolTitle: 'QR Maker & Reader', qrContentLabel: 'QR content', iterationLabel: 'Iterations', qrErrorLevel: 'Error correction', qrMargin: 'Margin', qrVersion: 'Version', qrDarkColor: 'Foreground', qrLightColor: 'Background',
     benchmarkButton: 'Run benchmark', realBenchmarkButton: 'Run real benchmark', downloadButton: 'Download PNG', uploadLabel: 'Upload QR image',
     cameraStartButton: 'Open camera', cameraStopButton: 'Close camera', readerResultTitle: 'Reader result', cameraStatusTitle: 'Camera status', previewBenchmarkTitle: 'Preview & Benchmark',
@@ -37,7 +37,7 @@ const translations = {
     avgLabel: 'Average', totalLabel: 'Total', charsUnit: 'chars', iterationUnit: 'runs', benchmarkDone: 'Generation benchmark complete',
     smartExtractTab: 'Extract tpk file from Cosmos URL', smartExtractTitle: 'Extract tpk file from Cosmos URL', smartCosmosLabel: 'Cosmos URL', smartExtractButton: 'Start extraction', smartDownloadButton: 'Download TPK', smartStatusTitle: 'Status',
     smartReady: 'Ready', smartStatusPreparing: 'Preparing...', smartStatusExtracting: 'Extracting...', smartStatusDone: 'Done', smartStatusError: 'Error', smartWindowsHint: 'Windows note: rpm2cpio/cpio are not directly available in default CMD/Powershell. Run the server in WSL (Ubuntu) or Linux/macOS.',
-    quickSection: 'Quick access', quickQr: 'QR generator', quickText: 'Text counter', quickJson: 'JSON formatter', quickSmart: 'TPK extractor',
+    quickSection: 'Quick access', quickQr: 'QR generator', quickText: 'Text counter', quickJson: 'JSON formatter', quickSmart: 'TPK extractor', quickPrivate: 'News collector',
   },
 };
 
@@ -61,10 +61,13 @@ const textSortLinesButton = $('text-sort-lines-button'); const textUpperButton =
 const jsonInput = $('json-input'); const jsonOutput = $('json-output'); const jsonError = $('json-error'); const jsonErrorText = jsonError.querySelector('p');
 const jsonFormatButton = $('json-format-button'); const jsonMinifyButton = $('json-minify-button'); const jsonCopyButton = $('json-copy-button');
 const cosmosUrlInput = $('cosmos-url-input'); const extractTpkButton = $('extract-tpk-button'); const downloadTpkLink = $('download-tpk-link'); const smartthingsStatus = $('smartthings-status'); const smartthingsHelp = $('smartthings-help');
-const quickQrButton = $('quick-qr-button'); const quickTextButton = $('quick-text-button'); const quickJsonButton = $('quick-json-button'); const quickSmartthingsButton = $('quick-smartthings-button');
+const newsScheduleMinutesInput = $('news-schedule-minutes'); const newsScheduleSaveButton = $('news-schedule-save-button'); const newsCollectNowButton = $('news-collect-now-button');
+const newsDeleteSelectedButton = $('news-delete-selected-button'); const newsExportSelectedButton = $('news-export-selected-button'); const newsStatusText = $('news-status-text'); const newsList = $('news-list');
+const quickQrButton = $('quick-qr-button'); const quickTextButton = $('quick-text-button'); const quickJsonButton = $('quick-json-button'); const quickSmartthingsButton = $('quick-smartthings-button'); const quickPrivateButton = $('quick-private-button');
 
 const encoder = new TextEncoder(); const settingsStorageKey = 'tool-box-settings'; const systemThemeQuery = window.matchMedia('(prefers-color-scheme: light)');
 let currentLanguage = 'ko'; let currentTheme = 'dark'; let cameraStream = null; let liveScanInterval = null; let barcodeDetector = null;
+let newsItems = [];
 
 const t = (k) => translations[currentLanguage][k] || translations.ko[k] || k;
 
@@ -276,6 +279,107 @@ async function extractSmartThingsTpk() {
   }
 }
 
+function selectedNewsIds() {
+  return [...document.querySelectorAll('.news-select:checked')].map((item) => item.value);
+}
+
+async function loadNewsState() {
+  const response = await fetch('/api/private/news');
+  const state = await response.json();
+  newsItems = Array.isArray(state.items) ? state.items : [];
+  newsScheduleMinutesInput.value = String(state.scheduleMinutes || 0);
+  renderNewsList();
+  setStatus(newsStatusText, state.lastCollectedAt ? `마지막 수집: ${new Date(state.lastCollectedAt).toLocaleString()}` : '준비됨');
+}
+
+function renderNewsList() {
+  if (!newsList) return;
+  if (!newsItems.length) {
+    newsList.innerHTML = '<li class="news-item empty-state"><p>수집된 뉴스가 없습니다.</p></li>';
+    return;
+  }
+  newsList.innerHTML = newsItems.map((item) => `
+    <li class="news-item" data-id="${item.id}">
+      <label><input type="checkbox" class="news-select" value="${item.id}" /></label>
+      <input class="news-edit-input" data-field="date" value="${item.date || ''}" />
+      <input class="news-edit-input" data-field="title" value="${escapeHtml(item.title || '').replaceAll('"', '&quot;')}" />
+      <textarea class="news-edit-textarea" data-field="body" rows="3">${escapeHtml(item.body || '')}</textarea>
+      <input class="news-edit-input" data-field="source" value="${escapeHtml(item.source || '').replaceAll('"', '&quot;')}" />
+      <button class="news-save-button" type="button">수정 저장</button>
+    </li>
+  `).join('');
+}
+
+async function saveNewsSchedule() {
+  const scheduleMinutes = Math.max(0, Number.parseInt(newsScheduleMinutesInput.value, 10) || 0);
+  const response = await fetch('/api/private/news/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ scheduleMinutes }),
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || '일정 저장 실패');
+  setStatus(newsStatusText, `수집 주기 저장 완료: ${scheduleMinutes}분`);
+}
+
+async function collectNewsNow() {
+  const response = await fetch('/api/private/news/collect', { method: 'POST' });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || '뉴스 수집 실패');
+  newsItems = result.items || [];
+  renderNewsList();
+  setStatus(newsStatusText, `수집 완료: ${new Date(result.lastCollectedAt).toLocaleString()}`);
+}
+
+async function deleteSelectedNews() {
+  const ids = selectedNewsIds();
+  if (!ids.length) return;
+  const response = await fetch('/api/private/news', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || '선택 삭제 실패');
+  newsItems = result.items || [];
+  renderNewsList();
+  setStatus(newsStatusText, `${ids.length}개 뉴스 삭제 완료`);
+}
+
+function exportSelectedNewsAsJson() {
+  const ids = new Set(selectedNewsIds());
+  if (!ids.size) return;
+  const selected = newsItems.filter((item) => ids.has(item.id));
+  const blob = new Blob([JSON.stringify(selected, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `news-selected-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function saveEditedNewsItem(listItem) {
+  const id = listItem.dataset.id;
+  const payload = {
+    date: listItem.querySelector('[data-field="date"]').value,
+    title: listItem.querySelector('[data-field="title"]').value,
+    body: listItem.querySelector('[data-field="body"]').value,
+    source: listItem.querySelector('[data-field="source"]').value,
+  };
+  const response = await fetch(`/api/private/news/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || '뉴스 수정 실패');
+  newsItems = newsItems.map((item) => (item.id === id ? result : item));
+  setStatus(newsStatusText, `뉴스 수정 완료: ${result.title}`);
+}
+
 tabButtons.forEach((button) => button.addEventListener('click', () => {
   activateTab(button.dataset.tabTarget);
   closeMenuOnMobile();
@@ -287,6 +391,23 @@ subTabButtons.forEach((button) => button.addEventListener('click', () => {
 benchmarkButton.addEventListener('click', runGenerationBenchmark); realBenchmarkButton.addEventListener('click', runRealBenchmark); cameraStartButton.addEventListener('click', startCamera); cameraStopButton.addEventListener('click', stopCamera);
 qrInput.addEventListener('input', renderQr); qrSize.addEventListener('input', renderQr); qrErrorLevel.addEventListener('change', renderQr); qrMargin.addEventListener('input', renderQr); qrVersion.addEventListener('change', renderQr); qrColorDark.addEventListener('input', renderQr); qrColorLight.addEventListener('input', renderQr);
 textInput.addEventListener('input', updateTextStats); jsonInput.addEventListener('input', updateJsonViewer); extractTpkButton.addEventListener('click', extractSmartThingsTpk);
+newsScheduleSaveButton?.addEventListener('click', async () => {
+  try { await saveNewsSchedule(); } catch (error) { setStatus(newsStatusText, `오류: ${error.message}`); }
+});
+newsCollectNowButton?.addEventListener('click', async () => {
+  try { await collectNewsNow(); } catch (error) { setStatus(newsStatusText, `오류: ${error.message}`); }
+});
+newsDeleteSelectedButton?.addEventListener('click', async () => {
+  try { await deleteSelectedNews(); } catch (error) { setStatus(newsStatusText, `오류: ${error.message}`); }
+});
+newsExportSelectedButton?.addEventListener('click', exportSelectedNewsAsJson);
+newsList?.addEventListener('click', async (event) => {
+  const saveButton = event.target.closest('.news-save-button');
+  if (!saveButton) return;
+  const listItem = saveButton.closest('.news-item');
+  if (!listItem) return;
+  try { await saveEditedNewsItem(listItem); } catch (error) { setStatus(newsStatusText, `오류: ${error.message}`); }
+});
 textTrimLinesButton.addEventListener('click', () => editText(trimLines));
 textRemoveEmptyButton.addEventListener('click', () => editText(removeEmptyLines));
 textDedupeLinesButton.addEventListener('click', () => editText(dedupeLines));
@@ -328,7 +449,11 @@ quickJsonButton?.addEventListener('click', () => {
   closeMenuOnMobile();
 });
 quickSmartthingsButton?.addEventListener('click', () => { activateTab('smartthings'); closeMenuOnMobile(); });
+quickPrivateButton?.addEventListener('click', () => { activateTab('private'); closeMenuOnMobile(); });
 themeSelect.addEventListener('change', () => { currentTheme = themeSelect.value; persistSettings(); applyTheme(); });
 systemThemeQuery.addEventListener('change', () => { if (currentTheme === 'system') applyTheme(); });
 window.addEventListener('beforeunload', stopCamera);
-window.addEventListener('load', async () => { loadSettings(); applyTheme(); applyTranslations(); updateTextStats(); updateJsonViewer(); await new Promise((r) => setTimeout(r, 80)); renderQr(); });
+window.addEventListener('load', async () => {
+  loadSettings(); applyTheme(); applyTranslations(); updateTextStats(); updateJsonViewer(); await new Promise((r) => setTimeout(r, 80)); renderQr();
+  await loadNewsState().catch(() => setStatus(newsStatusText, '뉴스 상태를 불러오지 못했습니다.'));
+});
