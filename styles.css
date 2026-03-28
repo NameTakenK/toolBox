@@ -84,6 +84,39 @@ button:hover, .secondary-button:hover { transform: translateY(-1px); opacity: .9
   gap: 16px;
 }
 .app-shell { min-width: 0; }
+
+main { display: grid; gap: 16px; }
+
+.section-head {
+  display: grid;
+  gap: 6px;
+}
+.section-head h2 { margin: 0; }
+.section-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+.qr-layout {
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr);
+  align-items: start;
+}
+.qr-layout > .card:last-child {
+  position: sticky;
+  top: 16px;
+}
+
+.card {
+  backdrop-filter: blur(8px);
+}
+.button-row {
+  gap: 8px;
+}
+.button-row > * {
+  flex: 1 1 180px;
+}
+
 .card {
   background: color-mix(in srgb, var(--card) 92%, transparent);
   border: 1px solid var(--border);
@@ -135,6 +168,7 @@ h1 { margin: .4rem 0 .5rem; font-size: clamp(1.4rem, 2.4vw, 2rem); }
 .sub-tab-bar { display: grid; gap: 10px; margin-bottom: 16px; }
 .panel, .sub-panel { display: none; }
 .panel.active, .sub-panel.active { display: block; }
+.panel.active { animation: panel-fade .22s ease; }
 .grid-two { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .compact-grid { align-items: end; }
 .stack-gap { display: grid; gap: 14px; }
@@ -191,6 +225,11 @@ h1 { margin: .4rem 0 .5rem; font-size: clamp(1.4rem, 2.4vw, 2rem); }
 .hidden { display: none !important; }
 .hidden-canvas { position: absolute; left: -9999px; width: 1px; height: 1px; }
 
+@keyframes panel-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 1080px) {
   .dashboard-shell { grid-template-columns: 1fr; padding-top: 70px; }
   .menu-toggle { display: inline-flex; }
@@ -208,6 +247,8 @@ h1 { margin: .4rem 0 .5rem; font-size: clamp(1.4rem, 2.4vw, 2rem); }
   }
   .side-rail.open { transform: translateX(0); }
   .rail-nav { grid-template-columns: 1fr; }
+  .qr-layout > .card:last-child { position: static; }
+  .button-row > * { flex: 1 1 100%; }
 }
 @media (max-width: 960px) {
   .grid-two, .settings-grid, .stats-grid, .rail-nav { grid-template-columns: 1fr; }
